@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace Furever_Homes.Models;
 
-public partial class ForeverDatabaseContext : DbContext
+public partial class ForeverDatabaseContext : IdentityDbContext<ApplicationUser>
 {
     public ForeverDatabaseContext()
     {
@@ -39,7 +40,7 @@ public partial class ForeverDatabaseContext : DbContext
 
         /*
          * Create a local secret.json file in the project root with the following content:
-         connectionStrings": {
+         ConnectionStrings": {
             "ForeverDatabase": "Your connection string here"
         }
 
@@ -51,6 +52,8 @@ public partial class ForeverDatabaseContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<Adopter>(entity =>
         {
             entity.HasKey(e => e.AdopterId).HasName("PK__Adopter__499FD2EDA3351B62");

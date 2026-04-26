@@ -1,6 +1,18 @@
 using Furever_Homes.Components;
+using Furever_Homes.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<ForeverDatabaseContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("ForeverDatabase")));
+
+builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false;
+})
+.AddEntityFrameworkStores<ForeverDatabaseContext>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -22,6 +34,8 @@ app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseAntiforgery();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
