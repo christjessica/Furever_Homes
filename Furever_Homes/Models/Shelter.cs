@@ -25,5 +25,9 @@ public partial class Shelter
 
     public string PhoneNumber { get; set; } = null!;
 
+    public string? ApplicationUserId { get; set; } = null!; 
+
+    public virtual ApplicationUser? ApplicationUser { get; set; } = null!;
+
     public virtual ICollection<Animal> Animals { get; set; } = new List<Animal>();
 }

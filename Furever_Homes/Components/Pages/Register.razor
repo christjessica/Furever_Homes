@@ -1,0 +1,241 @@
+﻿@page "/Register"
+
+@using Furever_Homes.Models
+@using Microsoft.AspNetCore.Identity
+@using Radzen
+@using Radzen.Blazor
+
+@inject UserManager<ApplicationUser> UserManager
+@inject Furever_Homes.Models.ForeverDatabaseContext DbContext
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+
+<RadzenTemplateForm TItem="object" Submit="RegisterUser">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+
+        <!-- User Type -->
+        <RadzenFormField Text="User Type">
+            <RadzenDropDown @bind-Value="@userType"
+                            Data="@userTypes"
+                            Name="UserType"
+                            Change="OnUserTypeChanged"
+                            Style="width: 100%">
+            </RadzenDropDown>
+        </RadzenFormField>
+        <RadzenRequiredValidator Component="UserType" Text="User type is required." />
+
+        @if (userType == "Adopter")
+        {
+            <!-- Name -->
+            <RadzenFormField Text="First Name" Variant="@variant">
+                <RadzenTextBox @bind-Value="@firstName" Name="FirstName" Style="width: 100%" />
+            </RadzenFormField>
+            <RadzenRequiredValidator Component="FirstName" Text="First name required." />
+
+            <RadzenFormField Text="Last Name" Variant="@variant">
+                <RadzenTextBox @bind-Value="@lastName" Name="LastName" Style="width: 100%" />
+            </RadzenFormField>
+            <RadzenRequiredValidator Component="LastName" Text="Last name required." />
+        }
+
+        @if (userType == "Shelter")
+        {
+            <!-- Shelter Name -->
+            <RadzenFormField Text="Shelter Name" Variant="@variant">
+                <RadzenTextBox @bind-Value="@shelterName" Name="ShelterName" Style="width: 100%" />
+            </RadzenFormField>
+            <RadzenRequiredValidator Component="ShelterName" Text="Shelter name required." />
+        }
+
+        <!-- Email -->
+        <RadzenFormField Text="Email" Variant="@variant">
+            <RadzenTextBox @bind-Value="@email" Name="Email" Style="width: 100%" />
+        </RadzenFormField>
+        <RadzenRequiredValidator Component="Email" Text="Email is required." />
+        <RadzenEmailValidator Component="Email" Text="Invalid email format." />
+
+        <!-- Phone Number -->
+        <RadzenFormField Text="Phone Number" Variant="@variant">
+            <RadzenTextBox @bind-Value="@phoneNumber" Name="PhoneNumber" Style="width: 100%" />
+        </RadzenFormField>
+        <RadzenRequiredValidator Component="PhoneNumber" Text="Phone number is required." />
+        <RadzenRegexValidator Component="PhoneNumber" Pattern="^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$" Text="Invalid phone number format" />
+
+        <!-- Address -->
+        <RadzenFormField Text="AddressLine1" Variant="@variant">
+            <RadzenTextBox @bind-Value="@addressLine1" Name="AddressLine1" Style="width: 100%" />
+        </RadzenFormField>
+
+        <RadzenFormField Text="AddressLine2" Variant="@variant">
+            <RadzenTextBox @bind-Value="@addressLine2" Name="AddressLine2" Style="width: 100%" />
+        </RadzenFormField>
+
+        <RadzenFormField Text="City" Variant="@variant">
+            <RadzenTextBox @bind-Value="@city" Name="City" Style="width: 100%" />
+        </RadzenFormField>
+
+        <RadzenFormField Text="State" Variant="@variant">
+            <RadzenTextBox @bind-Value="@state" Name="State" Style="width: 100%" />
+        </RadzenFormField>
+
+        <RadzenFormField Text="ZipCode" Variant="@variant">
+            <RadzenTextBox @bind-Value="@zipCode" Name="ZipCode" Style="width: 100%" />
+        </RadzenFormField>
+
+        <!-- Password -->
+        <RadzenFormField Text="Password" Variant="@variant">
+            <RadzenPassword @bind-Value="@password" Name="Password" Style="width: 100%" />
+        </RadzenFormField>
+        <RadzenRequiredValidator Component="Password" Text="Password is required" />
+
+        <!-- Confirm Password-->
+        <RadzenFormField Text="Confirm Password" Variant="@variant">
+            <RadzenPassword @bind-Value="@confirmPassword" Name="ConfirmPassword" Style="width: 100%" />
+        </RadzenFormField>
+
+        <!--Compare Validator -->
+        <RadzenCompareValidator Component="ConfirmPassword" CompareTo="Password" Text="Passwords do not match" />
+
+        <!-- Submit -->
+        <RadzenButton Text="Register" ButtonStyle="ButtonStyle.Primary" Click="RegisterUser" />
+
+    </RadzenStack>
+</RadzenTemplateForm>
+
+@code {
+    private string email = "";
+    private string password = "";
+    private string confirmPassword = "";
+    private string shelterName = "";
+    private string firstName = "";
+    private string lastName = "";
+    private string userType = "";
+    private string phoneNumber = "";
+    private string addressLine1 = "";
+    private string addressLine2 = "";
+    private string city = "";
+    private string state = "";
+    private string zipCode = "";
+    private List<string> userTypes = new() { "Adopter", "Shelter" };
+    Variant variant = Variant.Outlined;
+
+    private void OnUserTypeChanged(object value)
+    {
+        userType = value?.ToString() ?? "";
+
+        // Clear fields when user type changes
+        shelterName = "";
+        firstName = "";
+        lastName = "";
+    }
+
+    private async Task RegisterUser()
+    {
+        var existingUser = await UserManager.FindByEmailAsync(email);
+        if (existingUser != null)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Duplicate account",
+                Detail = "An account with this email already exists."
+            });
+
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(userType))
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "User type required",
+                Detail = "Please select Adopter or Shelter."
+            });
+
+            return;
+        }
+
+        try
+        {
+            var user = new ApplicationUser
+            {
+                UserName = email,
+                Email = email,
+                UserType = userType
+            };
+
+            var result = await UserManager.CreateAsync(user, password);
+
+            if (result.Succeeded)
+            {
+                if (userType == "Adopter")
+                {
+                    var adopter = new Adopter
+                    {
+                        FirstName = firstName,
+                        LastName = lastName,
+                        AddressLine1 = addressLine1,
+                        AddressLine2 = addressLine2,
+                        City = city,
+                        State = state,
+                        ZipCode = zipCode,
+                        Email = email,
+                        PhoneNumber = phoneNumber,
+                        ApplicationUserId = user.Id
+                    };
+
+                    DbContext.Adopters.Add(adopter);
+                }
+                else if (userType == "Shelter")
+                {
+                    var shelter = new Shelter
+                    {
+                        ShelterName = shelterName,
+                        AddressLine1 = addressLine1,
+                        AddressLine2 = addressLine2,
+                        City = city,
+                        State = state,
+                        ZipCode = zipCode,
+                        ContactEmail = email,
+                        PhoneNumber = phoneNumber,
+                        ApplicationUserId = user.Id
+                    };
+
+                    DbContext.Shelters.Add(shelter);
+                }
+
+
+                await DbContext.SaveChangesAsync();
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Account created",
+                    Detail = "You can now sign in."
+                });
+
+                NavigationManager.NavigateTo("/SignIn");
+            }
+            else
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Registration Failed",
+                    Detail = errors
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "An error occurred.",
+                Detail = ex.Message
+            });
+        }
+    }
+}

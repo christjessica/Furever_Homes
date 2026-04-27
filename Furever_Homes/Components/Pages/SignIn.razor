@@ -1,0 +1,80 @@
+﻿@page "/SignIn"
+
+@using Furever_Homes.Models
+@using Microsoft.AspNetCore.Identity
+@using Radzen
+@using Radzen.Blazor
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+
+
+
+<RadzenCard class="rz-my-12 rz-mx-auto rz-p-4 rz-p-md-12" style="max-width: 600px;">
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="1rem" class="rz-p-sm-12">
+        <RadzenFormField Text="Email" Variant="@variant">
+            <Start>
+                <RadzenIcon Icon="account_circle" />
+            </Start>
+            <ChildContent>
+                <RadzenTextBox @bind-Value="@value" />
+            </ChildContent>
+        </RadzenFormField>
+        <RadzenFormField Text="Password" Variant="@variant">
+            <ChildContent>
+                <RadzenTextBox @bind-Value="@passwordValue" Visible="@(!password)" />
+                <RadzenPassword @bind-Value="@passwordValue" Visible="@password" />
+            </ChildContent>
+            <End>
+                <RadzenButton Icon="@(password ? "visibility" : "visibility_off")" Click="TogglePassword" Variant="Variant.Text" Size="ButtonSize.Small" />
+            </End>
+        </RadzenFormField>
+        <RadzenButton Click="SignInUser" Text="Sign In" ButtonStyle="ButtonStyle.Primary" />
+        <RadzenButton Text="Create an Account" ButtonStyle="ButtonStyle.Secondary" Click="@GoToRegister" />
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    string value = "";
+    string passwordValue = "";
+    bool password = true;
+    Variant variant = Variant.Outlined;
+
+        void TogglePassword()
+    {
+        password = !password;
+    }
+
+    private void OnClick(string text)
+    {
+        NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Info, Summary = "Button Clicked", Detail = text });
+    }
+
+    private async Task SignInUser()
+    {
+        var result = await SignInManager.PasswordSignInAsync(
+            value,              //email/username
+            passwordValue,      //password
+            isPersistent: false,
+            lockoutOnFailure: false);
+
+        if (result.Succeeded)
+        {
+            NavigationManager.NavigateTo("/", forceLoad:true);
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage 
+            { 
+                Severity = NotificationSeverity.Error,
+                Summary = "Sign In Failed",
+                Detail = "Invalid email or password." });
+        }
+    }
+
+    private void GoToRegister()
+    {
+        NavigationManager.NavigateTo("/Register");
+    }
+}

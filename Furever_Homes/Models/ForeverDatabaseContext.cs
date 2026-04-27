@@ -93,6 +93,11 @@ public partial class ForeverDatabaseContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.ZipCode)
                 .HasMaxLength(15)
                 .IsUnicode(false);
+            entity.Property(e => e.ApplicationUserId)
+                .HasMaxLength(450);
+            entity.HasOne(e => e.ApplicationUser)
+                .WithOne()
+                .HasForeignKey<Adopter>(e => e.ApplicationUserId);
         });
 
         modelBuilder.Entity<Adoption>(entity =>
@@ -255,7 +260,13 @@ public partial class ForeverDatabaseContext : IdentityDbContext<ApplicationUser>
         {
             entity.HasKey(e => e.AnimalId).HasName("PK__CatDetai__A21A7327507AA80D");
 
-            entity.ToTable("CatDetail");
+            entity.ToTable("CatDetail", t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_CatDetail_CatCoat",
+                    "[CatCoat] IN ('Short Hair', 'Medium Hair', 'Long Hair', 'Hairless')"
+                );
+            });
 
             entity.Property(e => e.AnimalId)
                 .ValueGeneratedNever()
@@ -275,7 +286,13 @@ public partial class ForeverDatabaseContext : IdentityDbContext<ApplicationUser>
         {
             entity.HasKey(e => e.AnimalId).HasName("PK__DogDetai__A21A732771C402AF");
 
-            entity.ToTable("DogDetail");
+            entity.ToTable("DogDetail", t =>
+            {
+                t.HasCheckConstraint(
+                    "CK_DogDetail_DogCoat",
+                    "[DogCoat] IN ('Short', 'Medium', 'Long', 'Wire', 'Curly', 'Hairless', 'Double')"
+                );
+            });
 
             entity.Property(e => e.AnimalId)
                 .ValueGeneratedNever()
@@ -324,6 +341,11 @@ public partial class ForeverDatabaseContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.ZipCode)
                 .HasMaxLength(15)
                 .IsUnicode(false);
+            entity.Property(e => e.ApplicationUserId)
+                .HasMaxLength(450);
+            entity.HasOne(e => e.ApplicationUser)
+                .WithOne()
+                .HasForeignKey<Shelter>(e => e.ApplicationUserId);
         });
 
         OnModelCreatingPartial(modelBuilder);

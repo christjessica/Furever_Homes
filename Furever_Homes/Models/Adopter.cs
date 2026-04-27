@@ -27,5 +27,9 @@ public partial class Adopter
 
     public string? Country { get; set; }
 
+    public string? ApplicationUserId { get; set; } = null!;
+
+    public virtual ApplicationUser? ApplicationUser { get; set; } = null!;
+
     public virtual ICollection<AdoptionApplication> AdoptionApplications { get; set; } = new List<AdoptionApplication>();
 }
