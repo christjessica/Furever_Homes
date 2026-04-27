@@ -1,4 +1,5 @@
 ﻿@page "/Register"
+@rendermode InteractiveServer
 
 @using Furever_Homes.Models
 @using Microsoft.AspNetCore.Identity
@@ -10,7 +11,8 @@
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
 
-<RadzenTemplateForm TItem="object" Submit="RegisterUser">
+<RadzenCard>
+@* <RadzenTemplateForm TItem="object" Submit="RegisterUser"> *@
     <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
 
         <!-- User Type -->
@@ -92,16 +94,18 @@
         <RadzenFormField Text="Confirm Password" Variant="@variant">
             <RadzenPassword @bind-Value="@confirmPassword" Name="ConfirmPassword" Style="width: 100%" />
         </RadzenFormField>
+        <RadzenRequiredValidator Component="ConfirmPassword" Text="Please confirm your password" />
 
         <!--Compare Validator -->
         <RadzenCompareValidator Component="ConfirmPassword" CompareTo="Password" Text="Passwords do not match" />
 
         <!-- Submit -->
-        <RadzenButton Text="Register" ButtonStyle="ButtonStyle.Primary" Click="RegisterUser" />
+        <RadzenButton Text="Register" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="RegisterUser"/>
 
     </RadzenStack>
-</RadzenTemplateForm>
-
+@* </RadzenTemplateForm>
+ *@
+ </RadzenCard>
 @code {
     private string email = "";
     private string password = "";
@@ -215,7 +219,7 @@
                     Detail = "You can now sign in."
                 });
 
-                NavigationManager.NavigateTo("/SignIn");
+                // NavigationManager.NavigateTo("/SignIn");
             }
             else
             {
