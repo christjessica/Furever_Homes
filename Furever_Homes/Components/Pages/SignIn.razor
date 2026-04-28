@@ -8,6 +8,7 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
+@inject UserManager<ApplicationUser> UserManager
 
 
 
@@ -53,23 +54,41 @@
 
     private async Task SignInUser()
     {
-        var result = await SignInManager.PasswordSignInAsync(
-            value,              //email/username
-            passwordValue,      //password
-            isPersistent: false,
-            lockoutOnFailure: false);
+        var user = await UserManager.FindByEmailAsync(value);
 
-        if (result.Succeeded)
+        if (user == null)
         {
-            NavigationManager.NavigateTo("/", forceLoad:true);
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Login failed",
+                Detail = "Invalid email or password."
+            });
+
+            return;
+        }
+
+        var passwordValid = await UserManager.CheckPasswordAsync(user, passwordValue);
+
+        if (passwordValid)
+        {
+            if (user.UserType == "Shelter")
+            {
+                NavigationManager.NavigateTo("/ShelterDashboard");
+            }
+            else if (user.UserType == "Adopter")
+            {
+                NavigationManager.NavigateTo("/AdopterDashboard");
+            }
         }
         else
         {
-            NotificationService.Notify(new NotificationMessage 
-            { 
+            NotificationService.Notify(new NotificationMessage
+            {
                 Severity = NotificationSeverity.Error,
-                Summary = "Sign In Failed",
-                Detail = "Invalid email or password." });
+                Summary = "Login failed",
+                Detail = "Invalid email or password."
+            });
         }
     }
 
