@@ -1,4 +1,4 @@
-﻿@page "/Register"
+﻿@page "/register"
 @rendermode InteractiveServer
 
 @using Furever_Homes.Models
@@ -12,7 +12,6 @@
 @inject NotificationService NotificationService
 
 <RadzenCard>
-@* <RadzenTemplateForm TItem="object" Submit="RegisterUser"> *@
     <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
 
         <!-- User Type -->
@@ -84,6 +83,10 @@
             <RadzenTextBox @bind-Value="@zipCode" Name="ZipCode" Style="width: 100%" />
         </RadzenFormField>
 
+        <RadzenFormField Text="Country" Variant="@variant">
+            <RadzenTextBox @bind-Value="@country" Name="Country" Style="width: 100%" />
+        </RadzenFormField>
+
         <!-- Password -->
         <RadzenFormField Text="Password" Variant="@variant">
             <RadzenPassword @bind-Value="@password" Name="Password" Style="width: 100%" />
@@ -103,8 +106,6 @@
         <RadzenButton Text="Register" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="RegisterUser"/>
 
     </RadzenStack>
-@* </RadzenTemplateForm>
- *@
  </RadzenCard>
 @code {
     private string email = "";
@@ -120,6 +121,7 @@
     private string city = "";
     private string state = "";
     private string zipCode = "";
+    private string country = "";
     private List<string> userTypes = new() { "Adopter", "Shelter" };
     Variant variant = Variant.Outlined;
 
@@ -184,6 +186,7 @@
                         City = city,
                         State = state,
                         ZipCode = zipCode,
+                        Country = country,
                         Email = email,
                         PhoneNumber = phoneNumber,
                         ApplicationUserId = user.Id
@@ -201,6 +204,7 @@
                         City = city,
                         State = state,
                         ZipCode = zipCode,
+                        Country = country,
                         ContactEmail = email,
                         PhoneNumber = phoneNumber,
                         ApplicationUserId = user.Id
@@ -219,7 +223,7 @@
                     Detail = "You can now sign in."
                 });
 
-                // NavigationManager.NavigateTo("/SignIn");
+                // NavigationManager.NavigateTo("/sign-in");
             }
             else
             {
@@ -234,11 +238,12 @@
         }
         catch (Exception ex)
         {
+
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
-                Summary = "An error occurred.",
-                Detail = ex.Message
+                Summary = "Registration failed",
+                Detail = ex.InnerException?.Message ?? ex.Message
             });
         }
     }

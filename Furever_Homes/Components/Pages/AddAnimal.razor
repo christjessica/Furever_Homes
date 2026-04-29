@@ -1,0 +1,313 @@
+﻿@page "/add-animal"
+@rendermode InteractiveServer
+
+@using Furever_Homes.Models
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@using Radzen.Blazor
+
+@inject UserManager<ApplicationUser> UserManager
+@inject Furever_Homes.Models.ForeverDatabaseContext DbContext
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+
+<RadzenCard>
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+
+        <RadzenLabel Text="Enter Animal Information" />
+        <RadzenFormField>
+            <RadzenDropDown TValue="int"
+                            @bind-Value=@_animal.ShelterId
+                            Name="Shelter"
+                            Data=@_shelterInfo
+                            TextProperty="@nameof(ShelterInfo.Name)"
+                            ValueProperty="@nameof(ShelterInfo.Id)"
+                            AllowFiltering="true"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            FilterOperator="StringFilterOperator.Contains"
+                            Placeholder="Select Shelter"
+                            Style="width: 100%" />
+        </RadzenFormField>
+        <RadzenRequiredValidator Component="Shelter" Text="Please select a shelter." />
+
+        <RadzenFormField Text="Animal Name">
+            <RadzenTextBox @bind-Value="_animal.Name"
+                           Name="Name"
+                           MaxLength="100"
+                           Style="width: 100%" />
+        </RadzenFormField>
+        <RadzenRequiredValidator Component="Name" Text="Animal name is required." />
+
+        <RadzenFormField Text="Select Animal Type">
+            <RadzenSelectBar TValue="int"
+                             @bind-Value="_animal.AnimalTypeId"
+                             Name="AnimalType"
+                             Change="OnAnimalTypeChanged"
+                             Size="ButtonSize.Small">
+                <Items>
+                    @foreach (var type in _animalTypeInfo)
+                    {
+                        <RadzenSelectBarItem Text="@type.Name" Value="@type.Id" />
+                    }
+                </Items>
+            </RadzenSelectBar>
+        </RadzenFormField>
+        <RadzenRequiredValidator Component="AnimalType" Text="Please select an animal type." />
+
+        <!-- Breed -->
+        <RadzenFormField Text="Select Breed">
+            <RadzenDropDown TValue="int"
+                            @bind-Value="@_animal.BreedId"
+                            Data="@_filteredBreedInfo"
+                            TextProperty="@nameof(BreedInfo.Name)"
+                            ValueProperty="@nameof(BreedInfo.Id)"
+                            AllowFiltering="true"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            FilterOperator="StringFilterOperator.Contains"
+                            Name="Breed"
+                            Placeholder="Select Breed"
+                            Style="width: 100%">
+            </RadzenDropDown>
+        </RadzenFormField>
+        <RadzenRequiredValidator Component="Breed" Text="Please select a breed or unknown." />
+
+        <RadzenFormField Text="Select Sex">
+            <RadzenSelectBar TValue="string"
+                             @bind-Value="_animal.Sex"
+                             Name="Sex"
+                             Size="ButtonSize.Small">
+                <Items>
+                    <RadzenSelectBarItem Text="Female" Value="@("Female")" />
+                    <RadzenSelectBarItem Text="Male" Value="@("Male")" />
+                    <RadzenSelectBarItem Text="Unknown" Value="@("Unknown")" />
+                </Items>
+            </RadzenSelectBar>
+        </RadzenFormField>
+        <RadzenRequiredValidator Component="Sex" Text="Please select a sex." />
+
+        <RadzenFormField Text="Enter Age">
+            <RadzenLabel Text="Age (Years)" />
+            <RadzenNumeric @bind-Value="years"
+                           TValue="int?"
+                           Min="0"
+                           Style="width: 100%" />
+
+            <RadzenLabel Text="Age (Months)" />
+            <RadzenNumeric @bind-Value="months"
+                           TValue="int?"
+                           Min="0"
+                           Max="11"
+                           Style="width: 100%" />
+        </RadzenFormField>
+
+        <RadzenFormField Text="Enter Weight (Pounds)">
+            <RadzenNumeric @bind-Value="_animal.Weight"
+                           TValue="decimal?"
+                           Min="0"
+                           Style="width: 100%" />
+        </RadzenFormField>
+
+        <RadzenFormField Text="Enter Color">
+            <RadzenTextBox @bind-Value="_animal.Color"
+                           Name="Color"
+                           MaxLength="50"
+                           Style="width: 100%" />
+        </RadzenFormField>
+
+        <RadzenFormField Text="Select Spayed/Neutered Status">
+            <RadzenSelectBar TValue="bool?"
+                             @bind-Value="_animal.SpayedNeutered"
+                             Name="SpayedNeutered"
+                             Size="ButtonSize.Small">
+                <Items>
+                    <RadzenSelectBarItem Text="Yes" Value="true" />
+                    <RadzenSelectBarItem Text="No" Value="false" />
+                    <RadzenSelectBarItem Text="Unknown" Value="null" />
+                </Items>
+            </RadzenSelectBar>
+        </RadzenFormField>
+        <RadzenRequiredValidator Component="SpayedNeutered" Text="Please select spayed/neutered status." />
+
+        <RadzenFormField Text="Select Vaccination Status">
+            <RadzenSelectBar TValue="bool"
+                             @bind-Value="_animal.Vaccinated"
+                             Name="Vaccinated"
+                             Change="OnVaccinatedChanged"
+                             Size="ButtonSize.Small">
+                <Items>
+                    <RadzenSelectBarItem Text="Yes" Value="true" />
+                    <RadzenSelectBarItem Text="No" Value="false" />
+                </Items>
+            </RadzenSelectBar>
+        </RadzenFormField>
+        <RadzenRequiredValidator Component="Vaccinated" Text="Vaccination status required." />
+
+        <RadzenFormField Text="Enter Description">
+            <RadzenTextArea @bind-Value="_animal.Description"
+                            Rows="4"
+                            Style="width: 100%" />
+        </RadzenFormField>
+
+        <RadzenFormField Text="Enter Internal Notes (not visible to adopters)">
+            <RadzenTextArea @bind-Value="_animal.Notes"
+                            Rows="4"
+                            Style="width: 100%" />
+        </RadzenFormField>
+
+        <RadzenFormField Text="Select Availability">
+            <RadzenSelectBar TValue="bool"
+                             @bind-Value="_animal.Available"
+                             Name="Available"
+                             Size="ButtonSize.Small"
+                             Disabled="@(!_animal.Vaccinated)">
+                <Items>
+                    <RadzenSelectBarItem Text="Yes" Value="true" />
+                    <RadzenSelectBarItem Text="No" Value="false" />
+                </Items>
+            </RadzenSelectBar>
+        </RadzenFormField>
+        <RadzenRequiredValidator Component="Available" Text="Availability status required." />
+
+        <!-- Submit -->
+        <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="SaveAnimal" />
+
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+
+    private Animal _animal = new();
+    private int? years;
+    private int? months;
+
+    private List<BreedInfo> _breedInfo = new();
+    private List<ShelterInfo> _shelterInfo = new();
+    private List<AnimalTypeInfo> _animalTypeInfo = new();
+    private List<BreedInfo> _filteredBreedInfo = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _animal = new Animal
+        {
+            Vaccinated = false,
+            Available = false
+        };
+
+        //get all breeds
+        _breedInfo = await DbContext.Breeds
+            .Select(b => new BreedInfo
+            {
+                Id = b.BreedId,
+                Name = b.BreedName,
+                AnimalTypeId = b.AnimalTypeId
+            })
+            .ToListAsync();
+
+        //get all shelter
+        _shelterInfo = await DbContext.Shelters
+            .Select(s => new ShelterInfo
+            {
+                Id = s.ShelterId,
+                Name = s.ShelterName
+            })
+            .ToListAsync();
+
+        //get all animal types
+        _animalTypeInfo = await DbContext.AnimalTypes
+            .Select(a => new AnimalTypeInfo
+            {
+                Id = a.AnimalTypeId,
+                Name = a.TypeName
+            })
+            .ToListAsync();
+    }
+
+    private async Task SaveAnimal()
+    {
+        try
+        {
+            if (_animal.Available && !_animal.Vaccinated)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Invalid State",
+                    Detail = "Animal must be vaccinated before being available."
+                });
+
+                return;
+            }
+
+            if (years == null && months == null)
+            {
+                _animal.Age = null; // unknown
+            }
+            else
+            {
+                _animal.Age = ((years ?? 0) * 12) + (months ?? 0);
+            }
+
+            DbContext.Animals.Add(_animal);
+            await DbContext.SaveChangesAsync();
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Animal saved",
+                Detail = "The animal was added successfully."
+            });
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Save failed",
+                Detail = ex.InnerException?.Message ?? ex.Message
+            });
+        }
+    }
+
+    private void OnAnimalTypeChanged(int value)
+    {
+        _animal.AnimalTypeId = value;
+
+        _filteredBreedInfo = _breedInfo
+                .Where(b => b.AnimalTypeId == value)
+                .ToList();
+
+        // Reset selected breed when animal type changes
+        _animal.BreedId = _filteredBreedInfo
+            .First(b => b.Name.Contains("Unknown")).Id;
+    }
+
+    private void OnVaccinatedChanged(bool value)
+    {
+        _animal.Vaccinated = value;
+
+        if (!value)
+        {
+            _animal.Available = false;
+        }
+    }
+
+    class BreedInfo
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public int AnimalTypeId { get; set; }
+    }
+
+    class ShelterInfo
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+
+    class AnimalTypeInfo
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+    }
+}

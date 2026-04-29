@@ -11,7 +11,7 @@ public partial class Animal
 
     public int AnimalTypeId { get; set; }
 
-    public int? BreedId { get; set; }
+    public int BreedId { get; set; }
 
     public int? Age { get; set; }
 

@@ -1,4 +1,4 @@
-﻿@page "/SignIn"
+﻿@page "/sign-in"
 
 @using Furever_Homes.Models
 @using Microsoft.AspNetCore.Identity
@@ -74,11 +74,11 @@
         {
             if (user.UserType == "Shelter")
             {
-                NavigationManager.NavigateTo("/ShelterDashboard");
+                NavigationManager.NavigateTo("/shelter-dashboard");
             }
             else if (user.UserType == "Adopter")
             {
-                NavigationManager.NavigateTo("/AdopterDashboard");
+                NavigationManager.NavigateTo("/adopter-dashboard");
             }
         }
         else
@@ -94,6 +94,6 @@
 
     private void GoToRegister()
     {
-        NavigationManager.NavigateTo("/Register");
+        NavigationManager.NavigateTo("/register");
     }
 }
