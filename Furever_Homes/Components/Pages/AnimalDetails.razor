@@ -1,0 +1,26 @@
+﻿@page "/animal-details/{animalId:int}"
+@rendermode InteractiveServer
+
+@using Furever_Homes.Models
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@using Radzen.Blazor
+
+@inject ForeverDatabaseContext DbContext
+
+<h3>@animal?.Name</h3>
+
+
+
+@code {
+    [Parameter] public int animalId { get; set; }
+
+    private Animal? animal;
+
+    protected override async Task OnInitializedAsync()
+    {
+        animal = await DbContext.Animals
+            .FirstOrDefaultAsync(a => a.AnimalId == animalId);
+    }
+}

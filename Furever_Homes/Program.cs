@@ -7,7 +7,10 @@ using Radzen;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ForeverDatabaseContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("ForeverDatabase")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("ForeverDatabase"),
+        sqlOptions => sqlOptions.EnableRetryOnFailure()
+    ));
 
 builder.Services.AddRadzenComponents();
 

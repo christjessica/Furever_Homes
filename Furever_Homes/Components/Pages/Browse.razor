@@ -1,6 +1,69 @@
-﻿@page "/Browse"
-<h3>Browse</h3>
+﻿@page "/browse-animals"
+@rendermode InteractiveServer
+
+@using Furever_Homes.Models
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@using Radzen.Blazor
+
+@inject Furever_Homes.Models.ForeverDatabaseContext DbContext
+@inject NavigationManager NavigationManager
+
+<h2>Available Animals</h2>
+
+<RadzenStack Gap="1rem">
+    @foreach (var a in animals)
+    {
+        <RadzenCard Style="padding:15px">
+
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                <h3>@a.Name</h3>
+                <span><b>@FormatAge(a.Age)</b></span>
+            </RadzenStack>
+
+            <p><b>Breed:</b> @a.Breed?.BreedName</p> <!-- fix later -->
+            <p><b>Color:</b> @a.Color</p>
+
+            <p><b>Description:</b> @a.Description</p>
+
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
+                <span>@a.Sex</span>
+                <span>@(a.Vaccinated ? "Vaccinated" : "Not Vaccinated")</span>
+            </RadzenStack>
+            <RadzenButton Text="View Details"
+                          Click="@(() => GoToDetails(a.AnimalId))" />
+
+        </RadzenCard>
+    }
+</RadzenStack>
 
 @code {
+    private List<Animal> animals = new();
 
+    protected override async Task OnInitializedAsync()
+    {
+        animals = await DbContext.Animals
+            .Include(a => a.Breed)
+            .Where(a => a.Available)
+            .ToListAsync();
+    }
+
+    private string FormatAge(int? months)
+    {
+        if (months == null) return "Unknown";
+        if (months < 12) return $"{months} months";
+
+        int years = months.Value / 12;
+        int remainingMonths = months.Value % 12;
+
+        return remainingMonths == 0
+            ? $"{years} years"
+            : $"{years} years {remainingMonths} months";
+    }
+
+    void GoToDetails(int animalId)
+    {
+        NavigationManager.NavigateTo($"/animal-details/{animalId}");
+    }
 }
