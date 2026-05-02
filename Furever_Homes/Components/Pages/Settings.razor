@@ -1,5 +1,54 @@
-﻿<h3>Settings</h3>
+﻿@page "/settings"
 
+@using Furever_Homes.Models
+@using Microsoft.AspNetCore.Identity
+@using Radzen
+@using Radzen.Blazor
+
+@inject TooltipService tooltipService
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+<h3>Settings</h3>
+
+
+<RadzenCard class="rz-my-12 rz-mx-auto rz-p-4 rz-p-md-12" style="max-width: 600px;">
+    <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="1rem" class="rz-p-sm-12">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Wrap="FlexWrap.Wrap" class="rz-p-8">
+            <RadzenLabel Text ="What kind of animal do you want to adopt?" />
+            <RadzenButton Text="Dog" MouseEnter="@(args => TheDogGoes(args, new TooltipOptions() { Position = TooltipPosition.Bottom }))" Click="@(() => SetPetPreference("Dog"))"/>
+            <RadzenButton Text="Cat" MouseEnter="@(args => TheCatGoes(args, new TooltipOptions() { Position = TooltipPosition.Bottom }))" Click="@(() => SetPetPreference("Cat"))"/>
+            <RadzenButton Text="Either" MouseEnter="@(args => ShowNothing(args, new TooltipOptions() { Position = TooltipPosition.Bottom }))" Click="@(() => SetPetPreference("Either"))"/>   
+        </RadzenStack>
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Wrap="FlexWrap.Wrap" class="rz-p-8">
+            <RadzenLabel Text="Do you prefer a male or female pet?" />
+            <RadzenButton Text="Male"  />
+            <RadzenButton Text="Female" />
+            <RadzenButton Text="No Preference"  />
+        </RadzenStack>
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Wrap="FlexWrap.Wrap" class="rz-p-8">
+            <RadzenLabel Text ="How old do you want your pet?" />
+            <RadzenButton Text="puppy/kitten"  />
+            <RadzenButton Text="young" />
+            <RadzenButton Text="adult" />
+            <RadzenButton Text="senior" />
+            <RadzenButton Text="Any" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenCard>
 @code {
+    string petPreference = " ";
 
+
+
+    //Just for sillies 
+    void TheDogGoes(ElementReference elementReference, TooltipOptions options = null) => tooltipService.Open(elementReference, "bark", options);
+    void TheCatGoes(ElementReference elementReference, TooltipOptions options = null) => tooltipService.Open(elementReference, "meow", options);
+    void ShowNothing(ElementReference elementReference, TooltipOptions options = null) => tooltipService.Open(elementReference, "...", options);
+
+    //This is where we start setting preferences for filtering, this one is for pet type.
+    void SetPetPreference(string pet)
+    {
+        petPreference = pet;
+        
+    }
 }
