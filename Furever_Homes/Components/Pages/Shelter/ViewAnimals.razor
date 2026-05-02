@@ -1,0 +1,64 @@
+﻿@page "/shelter-dashboard/view-animals"
+
+<h3>ViewAndEditAnimals</h3>
+
+@rendermode InteractiveServer
+
+@using Furever_Homes.Models
+@using Furever_Homes.Services
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@using Radzen.Blazor
+
+@inject Furever_Homes.Models.ForeverDatabaseContext DbContext
+@inject CurrentUserService CurrentUser
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+
+@foreach (var a in animals)
+{
+    <RadzenCard Style="margin-bottom: 1rem; padding: 1rem;">
+        <h4>@a.Name</h4>
+        <p><b>Sex:</b> @a.Sex</p>
+        <p><b>Age:</b> @FormatAge(a.Age)</p>
+        <p><b>Color:</b> @a.Color</p>
+        <p><b>Status:</b> @(a.Available ? "Available" : "Not Available")</p>
+        <p><b>Vaccinated:</b> @(a.Vaccinated ? "Yes" : "No")</p>
+        <p><b>Description:</b> @a.Description</p>
+
+        <RadzenButton Text="Edit"
+                      Click="@(() => EditAnimal(a.AnimalId))" />
+
+    </RadzenCard>
+}
+
+@code {
+    private List<Animal> animals = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        animals = await DbContext.Animals
+            .Include(a => a.Breed)
+            .Where(a => a.Available)
+            .ToListAsync();
+    }
+
+    private string FormatAge(int? months)
+    {
+        if (months == null) return "Unknown";
+        if (months < 12) return $"{months} months";
+
+        int years = months.Value / 12;
+        int remainingMonths = months.Value % 12;
+
+        return remainingMonths == 0
+            ? $"{years} years"
+            : $"{years} years {remainingMonths} months";
+    }
+
+    void EditAnimal(int animalId)
+    {
+        NavigationManager.NavigateTo($"/shelter-dashboard/edit-animal/{animalId}");
+    }
+}

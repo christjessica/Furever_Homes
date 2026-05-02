@@ -1,0 +1,59 @@
+﻿@page "/shelter-dashboard"
+@rendermode InteractiveServer
+
+@using Furever_Homes.Models
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@using Radzen.Blazor
+@using Furever_Homes.Services
+
+@inject Furever_Homes.Models.ForeverDatabaseContext DbContext
+@inject NavigationManager NavigationManager
+@inject CurrentUserService CurrentUser
+
+<RadzenButton Text="Add Animal" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="AddAnimal"/>
+<RadzenButton Text="View Animals" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="ViewAnimals" />
+
+
+@code {
+    List<Animal> animals = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        //Not logged in
+        if (!CurrentUser.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo("/sign-in");
+            return;
+        }
+
+        //Wrong user type
+        if (CurrentUser.UserType != "Shelter")
+        {
+            NavigationManager.NavigateTo("/");
+            return;
+        }
+
+        //Safe to load shelter dashboard
+        var userId = CurrentUser.UserId;
+
+
+        var shelter = await DbContext.Shelters
+            .FirstOrDefaultAsync(s => s.ApplicationUserId == CurrentUser.UserId);
+
+        animals = await DbContext.Animals
+            .Where(a => a.ShelterId == shelter.ShelterId)
+            .ToListAsync();
+    }
+
+    private void AddAnimal()
+    {
+        NavigationManager.NavigateTo("/shelter-dashboard/add-animal");
+    }
+
+    private void ViewAnimals()
+    {
+        NavigationManager.NavigateTo("/shelter-dashboard/view-animals");
+    }
+}

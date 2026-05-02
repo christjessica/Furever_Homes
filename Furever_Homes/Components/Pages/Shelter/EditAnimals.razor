@@ -1,0 +1,150 @@
+﻿@page "/shelter-dashboard/edit-animal/{AnimalId:int}"
+@rendermode InteractiveServer
+
+@using Furever_Homes.Models
+@using Furever_Homes.Services
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@using Radzen.Blazor
+
+@inject Furever_Homes.Models.ForeverDatabaseContext DbContext
+@inject CurrentUserService CurrentUser
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+
+<h3>EditAnimals</h3>
+
+@if (_animal == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <RadzenCard>
+        <RadzenStack Gap="1rem">
+            <RadzenFormField Text="Name">
+                <RadzenTextBox @bind-Value="_animal.Name" style="width:100%" />
+            </RadzenFormField>
+
+            <RadzenFormField Text="Color">
+                <RadzenTextBox @bind-Value="_animal.Color" Style="width:100%" />
+            </RadzenFormField>
+
+            <RadzenFormField Text="Description">
+                <RadzenTextArea @bind-Value="_animal.Description" Rows="4" Style="width:100%" />
+            </RadzenFormField>
+
+            <RadzenFormField Text="Internal Notes">
+                <RadzenTextArea @bind-Value="_animal.Notes" Rows="4" Style="width:100%" />
+            </RadzenFormField>
+
+            <RadzenSelectBar TValue="bool"
+                             @bind-Value="_animal.Vaccinated"
+                             Change="OnVaccinationChanged">
+                <Items>
+                    <RadzenSelectBarItem Value="true" Text="Vaccinated" />
+                    <RadzenSelectBarItem Value="false" Text="Not Vaccinated" />
+                </Items>
+            </RadzenSelectBar>
+
+            <RadzenSelectBar TValue="bool"
+                             @bind-Value="_animal.Available"
+                             Disabled="@(!_animal.Vaccinated)">
+                <Items>
+                    <RadzenSelectBarItem Value="true" Text="Available" />
+                    <RadzenSelectBarItem Value="false" Text="Not Available" />
+                </Items>
+            </RadzenSelectBar>
+
+            <RadzenButton Text="Save Changes"
+                          ButtonStyle="ButtonStyle.Primary"
+                          Click="SaveChanges" />
+
+            <RadzenButton Text="Back to Dashboard"
+                          ButtonStyle="ButtonStyle.Primary"
+                          Click="@(() => NavigationManager.NavigateTo("/shelter-dashboard"))" />
+
+        </RadzenStack>
+    </RadzenCard>
+}
+
+@code {
+    [Parameter] public int AnimalId { get; set; }
+
+    private Animal? _animal;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!CurrentUser.IsAuthenticated || CurrentUser.UserType != "Shelter")
+        {
+            NavigationManager.NavigateTo("/sign-in");
+            return;
+        }
+
+        _animal = await DbContext.Animals
+            .FirstOrDefaultAsync(a => a.AnimalId == AnimalId);
+
+        if (_animal == null)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Animal not found."
+            });
+            NavigationManager.NavigateTo("/shelter-dashboard");
+        }
+    }
+
+    private void OnVaccinationChanged(bool vaccinated)
+    {
+        _animal!.Vaccinated = vaccinated;
+
+        if (!vaccinated)
+        {
+            _animal.Available = false;
+        }
+    }
+
+    private async Task SaveChanges()
+    {
+        try
+        {
+            if (_animal == null)
+                return;
+
+            if (_animal.Available && !_animal.Vaccinated)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Invalid Status",
+                    Detail = "Animal must be vaccinated before being available."
+                });
+                return;
+            }
+
+            await DbContext.SaveChangesAsync();
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Saved",
+                Detail = "Animal updated successfully."
+            });
+
+            NavigationManager.NavigateTo("/shelter-dashboard");
+        }
+
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Save Failed",
+                Detail = ex.InnerException?.Message ?? ex.Message
+            });
+        }
+    }
+}

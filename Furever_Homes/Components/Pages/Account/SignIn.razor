@@ -1,16 +1,19 @@
 ﻿@page "/sign-in"
-
 @using Furever_Homes.Models
 @using Microsoft.AspNetCore.Identity
 @using Radzen
 @using Radzen.Blazor
+@using Furever_Homes.Services
 
 @inject SignInManager<ApplicationUser> SignInManager
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
 @inject UserManager<ApplicationUser> UserManager
+@inject CurrentUserService CurrentUser
 
 
+//Temporary demo auth: user is stored in memory and resets on page refresh, 
+//but it allows us to demo the dashboard and settings pages without having to create an account every time.
 
 <RadzenCard class="rz-my-12 rz-mx-auto rz-p-4 rz-p-md-12" style="max-width: 600px;">
         <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="1rem" class="rz-p-sm-12">
@@ -42,7 +45,7 @@
     bool password = true;
     Variant variant = Variant.Outlined;
 
-        void TogglePassword()
+    void TogglePassword()
     {
         password = !password;
     }
@@ -58,42 +61,42 @@
 
         if (user == null)
         {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Login failed",
-                Detail = "Invalid email or password."
-            });
-
+            ShowLoginError();
             return;
         }
 
         var passwordValid = await UserManager.CheckPasswordAsync(user, passwordValue);
 
-        if (passwordValid)
+        if (!passwordValid)
         {
-            if (user.UserType == "Shelter")
-            {
-                NavigationManager.NavigateTo("/shelter-dashboard");
-            }
-            else if (user.UserType == "Adopter")
-            {
-                NavigationManager.NavigateTo("/adopter-dashboard");
-            }
+            ShowLoginError();
+            return;
         }
-        else
+
+        CurrentUser.User = user;
+
+        if (user.UserType == "Shelter")
         {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Login failed",
-                Detail = "Invalid email or password."
-            });
+            NavigationManager.NavigateTo("/shelter-dashboard");
+        }
+        else if (user.UserType == "Adopter")
+        {
+            NavigationManager.NavigateTo("/adopter-dashboard");
         }
     }
 
     private void GoToRegister()
     {
         NavigationManager.NavigateTo("/register");
+    }
+
+    private void ShowLoginError()
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = "Login failed",
+            Detail = "Invalid email or password."
+        });
     }
 }

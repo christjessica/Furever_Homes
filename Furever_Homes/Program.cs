@@ -1,5 +1,6 @@
 using Furever_Homes.Components;
 using Furever_Homes.Models;
+using Furever_Homes.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Radzen;
@@ -24,7 +25,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-
+builder.Services.AddScoped<CurrentUserService>();
 
 var app = builder.Build();
 
