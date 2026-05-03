@@ -11,32 +11,42 @@
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
 
-<RadzenCard>
-    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
 
+@*Wrapped in register card to make the form look more nicer*@
+<RadzenCard class="register-card" style="max-width: 600px; margin: auto; padding: 2rem">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+        <RadzenRow JustifyContent="JustifyContent.Center">
+            <RadzenColumn Size="12" SizeMD="6">
         <!-- User Type -->
         <RadzenFormField Text="User Type">
             <RadzenDropDown @bind-Value="@userType"
                             Data="@userTypes"
                             Name="UserType"
                             Change="OnUserTypeChanged"
-                            Style="width: 100%">
+                            Style="max-width: 250px">
             </RadzenDropDown>
         </RadzenFormField>
         <RadzenRequiredValidator Component="UserType" Text="User type is required." />
-
+            </RadzenColumn>
+        </RadzenRow>
         @if (userType == "Adopter")
         {
             <!-- Name -->
-            <RadzenFormField Text="First Name" Variant="@variant">
-                <RadzenTextBox @bind-Value="@firstName" Name="FirstName" Style="width: 100%" />
-            </RadzenFormField>
-            <RadzenRequiredValidator Component="FirstName" Text="First name required." />
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size ="12" SizeMD="6" >
+                    <RadzenFormField Text="First Name" Variant="@variant">
+                       <RadzenTextBox @bind-Value="@firstName" Name="FirstName" Style="width: 100%" />
+                    </RadzenFormField>
+                    <RadzenRequiredValidator Component="FirstName" Text="First name required." />
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenFormField Text="Last Name" Variant="@variant">
+                        <RadzenTextBox @bind-Value="@lastName" Name="LastName" Style="width: 100%" />
+                    </RadzenFormField>
+                    <RadzenRequiredValidator Component="LastName" Text="Last name required." />
+                </RadzenColumn>
+            </RadzenRow>
 
-            <RadzenFormField Text="Last Name" Variant="@variant">
-                <RadzenTextBox @bind-Value="@lastName" Name="LastName" Style="width: 100%" />
-            </RadzenFormField>
-            <RadzenRequiredValidator Component="LastName" Text="Last name required." />
         }
 
         @if (userType == "Shelter")
@@ -47,58 +57,73 @@
             </RadzenFormField>
             <RadzenRequiredValidator Component="ShelterName" Text="Shelter name required." />
         }
-
         <!-- Email -->
-        <RadzenFormField Text="Email" Variant="@variant">
-            <RadzenTextBox @bind-Value="@email" Name="Email" Style="width: 100%" />
-        </RadzenFormField>
-        <RadzenRequiredValidator Component="Email" Text="Email is required." />
-        <RadzenEmailValidator Component="Email" Text="Invalid email format." />
-
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size ="12" SizeMD="6" >
+                <RadzenFormField Text="Email" Variant="@variant">
+                     <RadzenTextBox @bind-Value="@email" Name="Email" Style="width: 100%" />
+                </RadzenFormField>
+                <RadzenRequiredValidator Component="Email" Text="Email is required." />
+                <RadzenEmailValidator Component="Email" Text="Invalid email format." />
+            </RadzenColumn>
         <!-- Phone Number -->
-        <RadzenFormField Text="Phone Number" Variant="@variant">
-            <RadzenTextBox @bind-Value="@phoneNumber" Name="PhoneNumber" Style="width: 100%" />
-        </RadzenFormField>
-        <RadzenRequiredValidator Component="PhoneNumber" Text="Phone number is required." />
-        <RadzenRegexValidator Component="PhoneNumber" Pattern="^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$" Text="Invalid phone number format" />
+            <RadzenColumn Size="12" SizeMD="6">
+                 <RadzenFormField Text="Phone Number" Variant="@variant">
+                    <RadzenTextBox @bind-Value="@phoneNumber" Name="PhoneNumber" Style="width: 100%" />
+                 </RadzenFormField>
+             <RadzenRequiredValidator Component="PhoneNumber" Text="Phone number is required." />
+             <RadzenRegexValidator Component="PhoneNumber" Pattern="^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$" Text="Invalid phone number format" />
+            </RadzenColumn>
+        </RadzenRow>
 
         <!-- Address -->
         <RadzenFormField Text="AddressLine1" Variant="@variant">
             <RadzenTextBox @bind-Value="@addressLine1" Name="AddressLine1" Style="width: 100%" />
         </RadzenFormField>
-
         <RadzenFormField Text="AddressLine2" Variant="@variant">
             <RadzenTextBox @bind-Value="@addressLine2" Name="AddressLine2" Style="width: 100%" />
         </RadzenFormField>
 
-        <RadzenFormField Text="City" Variant="@variant">
-            <RadzenTextBox @bind-Value="@city" Name="City" Style="width: 100%" />
-        </RadzenFormField>
+        <!--City-->
+        <RadzenRow Gap="1rem">
+           <RadzenColumn Size ="12" SizeMD="6" >
+             <RadzenFormField Text="City" Variant="@variant">
+                <RadzenTextBox @bind-Value="@city" Name="City" Style="width: 100%" />
+             </RadzenFormField>
+           </RadzenColumn>      
+        <!--State-->
+           <RadzenColumn Size="12" SizeMD="6">
+              <RadzenFormField Text="State" Variant="@variant">
+                <RadzenTextBox @bind-Value="@state" Name="State" Style="width: 100%" />
+              </RadzenFormField>
+           </RadzenColumn>
+        </RadzenRow>
 
-        <RadzenFormField Text="State" Variant="@variant">
-            <RadzenTextBox @bind-Value="@state" Name="State" Style="width: 100%" />
-        </RadzenFormField>
-
-        <RadzenFormField Text="ZipCode" Variant="@variant">
-            <RadzenTextBox @bind-Value="@zipCode" Name="ZipCode" Style="width: 100%" />
-        </RadzenFormField>
-
-        <RadzenFormField Text="Country" Variant="@variant">
-            <RadzenTextBox @bind-Value="@country" Name="Country" Style="width: 100%" />
-        </RadzenFormField>
+        <!--Zipcode-->
+        <RadzenRow Gap="1rem">
+           <RadzenColumn Size="12" SizeMD="6">
+                <RadzenFormField Text="ZipCode" Variant="@variant">
+                <RadzenTextBox @bind-Value="@zipCode" Name="ZipCode" Style="width: 100%" />
+                </RadzenFormField>
+           </RadzenColumn>
+        <!--Country-->
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenFormField Text="Country" Variant="@variant">
+                    <RadzenTextBox @bind-Value="@country" Name="Country" Style="width: 100%" />
+                </RadzenFormField>
+            </RadzenColumn>
+        </RadzenRow>
 
         <!-- Password -->
-        <RadzenFormField Text="Password" Variant="@variant">
-            <RadzenPassword @bind-Value="@password" Name="Password" Style="width: 100%" />
-        </RadzenFormField>
-        <RadzenRequiredValidator Component="Password" Text="Password is required" />
-
+                <RadzenFormField Text="Password" Variant="@variant">
+                    <RadzenPassword @bind-Value="@password" Name="Password" Style="width: 100%" />
+                </RadzenFormField>
+                     <RadzenRequiredValidator Component="Password" Text="Password is required" />
         <!-- Confirm Password-->
-        <RadzenFormField Text="Confirm Password" Variant="@variant">
-            <RadzenPassword @bind-Value="@confirmPassword" Name="ConfirmPassword" Style="width: 100%" />
-        </RadzenFormField>
-        <RadzenRequiredValidator Component="ConfirmPassword" Text="Please confirm your password" />
-
+                 <RadzenFormField Text="Confirm Password" Variant="@variant">
+                    <RadzenPassword @bind-Value="@confirmPassword" Name="ConfirmPassword" Style="width: 100%" />
+                 </RadzenFormField>
+                     <RadzenRequiredValidator Component="ConfirmPassword" Text="Please confirm your password" />          
         <!--Compare Validator -->
         <RadzenCompareValidator Component="ConfirmPassword" CompareTo="Password" Text="Passwords do not match" />
 

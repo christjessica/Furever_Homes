@@ -10,12 +10,13 @@
 @inject Furever_Homes.Models.ForeverDatabaseContext DbContext
 @inject NavigationManager NavigationManager
 
-<h2>Available Animals</h2>
+<h2>Available Animals🐾</h2>
 
-<RadzenStack Gap="1rem">
+ <div class="animal-grid">  <!--wrap animal information in a grid of cards-->
+
     @foreach (var a in animals)
     {
-        <RadzenCard Style="padding:15px">
+        <RadzenCard class="animal-card" Style="padding:15px">
 
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
                 <h3>@a.Name</h3>
@@ -24,7 +25,6 @@
 
             <p><b>Breed:</b> @a.Breed?.BreedName</p> <!-- fix later -->
             <p><b>Color:</b> @a.Color</p>
-
             <p><b>Description:</b> @a.Description</p>
 
             <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
@@ -36,19 +36,60 @@
 
         </RadzenCard>
     }
-</RadzenStack>
+</div>
 
 @code {
     private List<Animal> animals = new();
 
     protected override async Task OnInitializedAsync()
     {
-        animals = await DbContext.Animals
-            .Include(a => a.Breed)
-            .Where(a => a.Available)
-            .ToListAsync();
+    
+        // animals = await DbContext.Animals
+        //     .Include(a => a.Breed)
+        //     .Where(a => a.Available)
+        //     .ToListAsync();
+
+        //TEMP: using mock data while backend works on DB and is unavailable to frontend
+        animals = GetTempAnimals(); //get rid of later
+
+        await Task.CompletedTask;
     }
 
+    //Frontend work, can get rid of this when fully merged with backend
+    
+    private List<Animal> GetTempAnimals()
+    {
+      
+        return new List<Animal>
+        {
+            new Animal
+            {
+                AnimalId = 1,
+                Name = "Buddy",
+                Age = 10,
+                Color = "Brown",
+                Sex = "Male",
+                Vaccinated = true,
+                Description = "Friendly and energetic! Loves belly rubs",
+                Breed = new Breed{BreedName = "Poodle" },
+                Available = true
+            },
+            new Animal
+            {
+                AnimalId = 2,
+                Name = "Pickles",
+                Age = 3,
+                Color = "Black",
+                Sex = "Female",
+                Vaccinated = true,
+                Description = "Very calm and loves the outdoors",
+                Breed = new Breed {BreedName = "Domestic ShortHair" },
+                Available = true
+            },
+            
+        };
+    }  //end of frontend work 
+    
     private string FormatAge(int? months)
     {
         if (months == null) return "Unknown";
@@ -66,4 +107,5 @@
     {
         NavigationManager.NavigateTo($"/animal-details/{animalId}");
     }
+    
 }

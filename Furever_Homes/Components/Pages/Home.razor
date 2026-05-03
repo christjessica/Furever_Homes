@@ -1,4 +1,21 @@
 ﻿@page "/"
+@using Radzen.Blazor
 
-<PageTitle>Furever Homes</PageTitle>
+<PageTitle>
+    Furever Homes
+</PageTitle>
 
+<div class="homescreen">
+    <RadzenText TextStyle="TextStyle.H3">
+        Find your perfect companion🐾!  <!--Found a paw icon that actually works in text-->
+    </RadzenText>
+<RadzenButton Text="Get Started" ButtonStyle="Radzen.ButtonStyle.Primary" Click="@GoToWelcome"/>
+</div>
+
+@code{
+    [Inject] NavigationManager Nav{ get; set; }
+    void GoToWelcome()
+    {
+        Nav.NavigateTo("/sign-in");
+    }
+}

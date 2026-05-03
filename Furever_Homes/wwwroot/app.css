@@ -1,3 +1,29 @@
+body{
+    background: linear-gradient(135deg, #cdb4db, #bde0fe);
+}
+.sidebar,.navbar,.top-row, /*Makes the side bar the pink color*/
+.nav-scrollable {
+    background-color: #ffc8dd !important;
+    border-right: 1px solid #eee
+}
+.nav-link { /*Lines up icons with page names*/
+    color: lightslategray !important;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.nav-link .bi {
+    
+    margin-right: 8px;
+    font-size: 1.2rem;
+}
+.nav-link.active .bi{  /*Highlights the page your on with a pink color*/ 
+    color:#e91e63;
+}
+.nav-link:hover{   /*Hover over the different page names with pink color*/
+    color: #e91e63 !important;
+}
+
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
@@ -5,11 +31,18 @@ html, body {
 a, .btn-link {
     color: #006bb7;
 }
-
+input, textarea, .rz-textbox, .rz-password, .rz-dropdown {
+    color: #8093f1 !important;
+}
 .btn-primary {
-    color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+    color: #003049 !important;
+    background-color: #bde0fe !important;
+    border-color: #bde0fe !important;
+}
+.rz-button { /*makes all the buttons the light blue color*/
+    color: #003049 !important;
+    background-color: #bde0fe !important;
+    border-color: #bde0fe !important;
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
@@ -48,4 +81,36 @@ h1:focus {
 
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
+}
+.homescreen{
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-image: url('images/WelcomeBackground.png')!important;
+    background-size: cover;
+    background-position:center;
+    text-align: center;
+    color:black;
+}
+.animal-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+    gap: 1.5rem !important;
+    padding: 1rem !important;
+}
+.animal-card{
+    height: 100%;
+    border: 15px solid #8093f1  !important; 
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.15);
+}
+.register-card{
+    max-width: 650px;
+    margin:auto;
+    padding: 2rem;
+}
+.settings-section{
+    padding: 1rem 0;
 }
