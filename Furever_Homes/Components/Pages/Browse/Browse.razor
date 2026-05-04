@@ -6,7 +6,10 @@
 @using Microsoft.EntityFrameworkCore
 @using Radzen
 @using Radzen.Blazor
+@using Furever_Homes.Services
 
+
+@inject UserFilter userFilter
 @inject Furever_Homes.Models.ForeverDatabaseContext DbContext
 @inject NavigationManager NavigationManager
 
@@ -43,12 +46,30 @@
 
     protected override async Task OnInitializedAsync()
     {
-        animals = await DbContext.Animals
+        var query = DbContext.Animals //Filtering first before execution
             .Include(a => a.Breed)
             .Where(a => a.Available)
-            .ToListAsync();
-    }
+            .AsQueryable();
 
+        //Series of if statements that'll filter only if the preferences aren't set to their default values
+        if (!string.IsNullOrWhiteSpace(userFilter.UserSex) && userFilter.UserSex != "No Preference")
+        {
+            query = query.Where(a => a.Sex == userFilter.UserSex);
+        }
+
+        if (userFilter.UserPet != null && !string.IsNullOrEmpty(userFilter.UserPet.TypeName))
+        {
+            
+            query = query.Where(a => a.AnimalTypeId == userFilter.UserPet.AnimalTypeId);
+        }
+
+        if (userFilter.MinAge != -1 || userFilter.MaxAge != -1)
+        {
+            query = query.Where(a => a.Age >= userFilter.MinAge && a.Age <= userFilter.MaxAge);
+        }
+
+        animals = await query.ToListAsync();
+    }
     private string FormatAge(int? months)
     {
         if (months == null) return "Unknown";

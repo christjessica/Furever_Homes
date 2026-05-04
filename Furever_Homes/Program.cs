@@ -26,6 +26,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddScoped<CurrentUserService>();
+builder.Services.AddScoped<UserFilter>();
 
 var app = builder.Build();
 
