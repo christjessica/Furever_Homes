@@ -2,21 +2,17 @@
 @rendermode InteractiveServer
 
 @using Furever_Homes.Models
-@using Furever_Homes.Services
-@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using Radzen
 @using Radzen.Blazor
 
+@inject UserFilter userFilter
 @inject Furever_Homes.Models.ForeverDatabaseContext DbContext
 @inject Furever_Homes.Services.CurrentUserService CurrentUser
 @inject NavigationManager NavigationManager
 
 @* Displays all available animals in a card-based layout.
    Each card shows the primary photo, basic info, and a link to details. *@
-
-
-<h2>Available Animals</h2>
 
 @* Responsive grid:
    - 1 column on small screens
@@ -87,38 +83,19 @@
     private List<Animal> animals = new();
 
     private int currentAdopterId;
-    private HashSet<int> savedAnimalIds = new();
 
     // Loads available animals from the database,
     // including related data (breed, photos, shelter)
     protected override async Task OnInitializedAsync()
     {
-        animals = await DbContext.Animals
+        var query = DbContext.Animals //Filtering first before execution
             .Include(a => a.Breed)
             .Include(a => a.AnimalPhotos)
             .Include(a => a.Shelter)
             .Where(a => a.Available)
-            .ToListAsync();
-
-        var adopter = await DbContext.Adopters
-            .FirstOrDefaultAsync(a => a.ApplicationUserId == CurrentUser.UserId);
-
-        if (adopter == null)
-        {
-            return;
-        }
-
-        currentAdopterId = adopter.AdopterId;
-
-        var savedIds = await DbContext.SavedAnimals
-            .Where(s => s.AdopterId == currentAdopterId)
-            .Select(s => s.AnimalId)
-            .ToListAsync();
-
-        savedAnimalIds = savedIds.ToHashSet();
+            .AsQueryable();
     }
 
-    // Converts total months into readable format (years/months)
     private string FormatAge(int? months)
     {
         if (months == null) return "Unknown";

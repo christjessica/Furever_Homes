@@ -4,12 +4,14 @@
 @using Microsoft.AspNetCore.Identity
 @using Radzen
 @using Radzen.Blazor
+@using Furever_Homes.Services
 
 @inject TooltipService tooltipService
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
-<h3>Settings</h3>
+@inject UserFilter userFilter
 
+<h3>Settings</h3>
 
 <RadzenCard class="rz-my-12 rz-mx-auto rz-p-4 rz-p-md-12" style="max-width: 600px;">
     <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="1rem" class="rz-p-sm-12">
@@ -21,34 +23,78 @@
         </RadzenStack>
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Wrap="FlexWrap.Wrap" class="rz-p-8">
             <RadzenLabel Text="Do you prefer a male or female pet?" />
-            <RadzenButton Text="Male"  />
-            <RadzenButton Text="Female" />
-            <RadzenButton Text="No Preference"  />
+            <RadzenButton Text="Male"  Click="@(() => SetSexPreference("Male"))"/>
+            <RadzenButton Text="Female" Click="@(() => SetSexPreference("Female"))"/>
+            <RadzenButton Text="No Preference" Click="@(() => SetSexPreference("No Preference"))"/>
         </RadzenStack>
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Wrap="FlexWrap.Wrap" class="rz-p-8">
-            <RadzenLabel Text ="How old do you want your pet?" />
-            <RadzenButton Text="puppy/kitten"  />
-            <RadzenButton Text="young" />
-            <RadzenButton Text="adult" />
-            <RadzenButton Text="senior" />
-            <RadzenButton Text="Any" />
+            <RadzenButton Text="puppy/kitten"  Click="@(() => SetAgePreference("puppy/kitten"))"/>
+            <RadzenButton Text="young" Click="@(() => SetAgePreference("young"))"/>
+            <RadzenButton Text="adult" Click="@(() => SetAgePreference("adult"))"/>
+            <RadzenButton Text="senior" Click="@(() => SetAgePreference("senior"))"/>
+            <RadzenButton Text="Any" Click="@(() => SetAgePreference("any"))"/> 
         </RadzenStack>
+        <RadzenButton Text="Apply Filters" Click="@Apply" />
     </RadzenStack>
 </RadzenCard>
 @code {
-    string petPreference = " ";
-
-
-
     //Just for sillies 
     void TheDogGoes(ElementReference elementReference, TooltipOptions options = null) => tooltipService.Open(elementReference, "bark", options);
     void TheCatGoes(ElementReference elementReference, TooltipOptions options = null) => tooltipService.Open(elementReference, "meow", options);
     void ShowNothing(ElementReference elementReference, TooltipOptions options = null) => tooltipService.Open(elementReference, "...", options);
-
+    
+    //Redirect, helps save changes
+    void Apply()
+        {
+            NavigationManager.NavigateTo("/browse-animals");
+        }
     //This is where we start setting preferences for filtering, this one is for pet type.
     void SetPetPreference(string pet)
     {
-        petPreference = pet;
-        
+        if (pet == "Either")
+        {
+            userFilter.UserPet = null;
+        }
+        else if (pet == "Dog")
+        {
+            userFilter.UserPet.AnimalTypeId = 1;
+            userFilter.UserPet.TypeName = "Dog";
+        }
+        else
+        {
+            userFilter.UserPet.AnimalTypeId = 2;
+            userFilter.UserPet.TypeName = "Cat";
+        }
+    }
+   void SetSexPreference(string sex)
+    {
+        userFilter.UserSex = sex;
+    }
+
+    void SetAgePreference(string age)
+    {
+        switch (age)
+        {
+            case "puppy/kitten":  // 0 to 12 months
+                userFilter.MinAge = 0;
+                userFilter.MaxAge = 12;
+                break;
+            case "young":  // 13 to 36 months
+                userFilter.MinAge = 13;
+                userFilter.MaxAge = 36;
+                break;
+            case "adult":  // 37 to 84 months
+                userFilter.MinAge = 37;
+                userFilter.MaxAge = 84;
+                break;
+            case "senior": // 85+ months
+                userFilter.MinAge = 85;
+                userFilter.MaxAge = 1000; 
+                break;
+            default:       // Any
+                userFilter.MinAge = -1;
+                userFilter.MaxAge = -1;
+                break;
+        }
     }
 }
