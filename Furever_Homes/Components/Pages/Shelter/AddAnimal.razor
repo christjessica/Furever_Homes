@@ -115,6 +115,90 @@
                            Style="width: 100%" />
         </RadzenFormField>
 
+        @if (SelectedAnimalTypeName == "Cat")
+        {
+            <RadzenFormField Text="Coat Type?">
+                <RadzenDropDown @bind-Value="_catDetails.CatCoat"
+                                Data="@catCoatOptions"
+                                Style="width:100%" />
+            </RadzenFormField>
+
+            <RadzenFormField Text="FIV Positive?">
+                <RadzenSelectBar TValue="bool?"
+                                 @bind-Value="_catDetails.Fivpositive"
+                                 Name="FIVPositive"
+                                 Size="ButtonSize.Small">
+                    <Items>
+                        <RadzenSelectBarItem Text="Yes" Value="true" />
+                        <RadzenSelectBarItem Text="No" Value="false" />
+                        <RadzenSelectBarItem Text="Unknown" Value="@(null)" />
+                    </Items>
+                </RadzenSelectBar>
+            </RadzenFormField>
+
+            <RadzenFormField Text="Litter Box Trained?">
+                <RadzenSelectBar TValue="bool?"
+                                 @bind-Value="_catDetails.LitterTrained"
+                                 Name="LitterTrained"
+                                 Size="ButtonSize.Small">
+                    <Items>
+                        <RadzenSelectBarItem Text="Yes" Value="true" />
+                        <RadzenSelectBarItem Text="No" Value="false" />
+                        <RadzenSelectBarItem Text="Unknown" Value="@(null)" />
+                    </Items>
+                </RadzenSelectBar>
+            </RadzenFormField>
+
+            <RadzenFormField Text="Declawed?">
+                <RadzenSelectBar TValue="bool?"
+                                 @bind-Value="_catDetails.Declawed"
+                                 Name="Declawed"
+                                 Size="ButtonSize.Small">
+                    <Items>
+                        <RadzenSelectBarItem Text="Yes" Value="true" />
+                        <RadzenSelectBarItem Text="No" Value="false" />
+                        <RadzenSelectBarItem Text="Unknown" Value="@(null)" />
+                    </Items>
+                </RadzenSelectBar>
+            </RadzenFormField>
+
+
+        }
+        else if (SelectedAnimalTypeName == "Dog")
+        {
+            <RadzenFormField Text="Coat Type?">
+                <RadzenDropDown @bind-Value="_dogDetails.DogCoat"
+                                Data="@dogCoatOptions"
+                                Style="width:100%" />
+            </RadzenFormField>
+
+            <RadzenFormField Text="House Trained?">
+                <RadzenSelectBar TValue="bool?"
+                                 @bind-Value="_dogDetails.HouseTrained"
+                                 Name="HouseTrained"
+                                 Size="ButtonSize.Small">
+                    <Items>
+                        <RadzenSelectBarItem Text="Yes" Value="true" />
+                        <RadzenSelectBarItem Text="No" Value="false" />
+                        <RadzenSelectBarItem Text="Unknown" Value="@(null)" />
+                    </Items>
+                </RadzenSelectBar>
+            </RadzenFormField>
+
+            <RadzenFormField Text="Heartworm Positive?">
+                <RadzenSelectBar TValue="bool?"
+                                 @bind-Value="_dogDetails.Heartworm"
+                                 Name="HeartwormPositive"
+                                 Size="ButtonSize.Small">
+                    <Items>
+                        <RadzenSelectBarItem Text="Yes" Value="true" />
+                        <RadzenSelectBarItem Text="No" Value="false" />
+                        <RadzenSelectBarItem Text="Unknown" Value="@(null)" />
+                    </Items>
+                </RadzenSelectBar>
+            </RadzenFormField>
+        }
+
         <RadzenFormField Text="Select Spayed/Neutered Status">
             <RadzenSelectBar TValue="bool?"
                              @bind-Value="_animal.SpayedNeutered"
@@ -185,6 +269,33 @@
     private List<ShelterInfo> _shelterInfo = new();
     private List<AnimalTypeInfo> _animalTypeInfo = new();
     private List<BreedInfo> _filteredBreedInfo = new();
+
+    private string SelectedAnimalTypeName =>
+        _animalTypeInfo
+            .FirstOrDefault(t => t.Id == _animal.AnimalTypeId)
+            ?.Name ?? "";
+
+    private DogDetail _dogDetails = new();
+    private CatDetail _catDetails = new();
+
+    private List<string> catCoatOptions = new()
+    {
+        "Hairless",
+        "Long Hair",
+        "Medium Hair",
+        "Short Hair"
+    };
+
+    private List<string> dogCoatOptions = new()
+    {
+        "Double",
+        "Hairless",
+        "Curly",
+        "Wire",
+        "Long",
+        "Medium",
+        "Short"
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -311,3 +422,4 @@
         public string Name { get; set; }
     }
 }
+
