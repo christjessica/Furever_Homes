@@ -5,11 +5,15 @@
 @using Microsoft.EntityFrameworkCore
 @using Radzen
 @using Radzen.Blazor
+@using Furever_Homes.Services
 
 @inject UserFilter userFilter
-@inject Furever_Homes.Models.ForeverDatabaseContext DbContext
-@inject Furever_Homes.Services.CurrentUserService CurrentUser
+@inject ForeverDatabaseContext DbContext
 @inject NavigationManager NavigationManager
+@inject CurrentUserService CurrentUser
+@inject NotificationService NotificationService
+
+<h2>Available Animals</h2>
 
 @* Displays all available animals in a card-based layout.
    Each card shows the primary photo, basic info, and a link to details. *@
@@ -28,14 +32,15 @@
                 @* Get the primary photo for this animal *@
                 @* Because of the database constraint, there should only ever be one primary photo *@
                 @{
-                    var primaryPhoto = a.AnimalPhotos.FirstOrDefault(p => p.IsPrimary)?.PhotoUrl;
+                    var primaryPhoto = a.AnimalPhotos
+                        .FirstOrDefault(p => p.IsPrimary)?.PhotoUrl;
                 }
 
                 @* Show image if available, otherwise show placeholder *@
                 @if (!string.IsNullOrWhiteSpace(primaryPhoto))
                 {
                     <img src="@primaryPhoto"
-                    style="width:100%; height:220px; object-fit:cover" />
+                         style="width:100%; height:220px; object-fit:cover" />
                 }
                 else
                 {
@@ -61,16 +66,24 @@
                         </p>
 
                         @* Navigate to full details page for this animal *@
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                        <RadzenStack Orientation="Orientation.Horizontal" 
+                                     Gap="0.5rem" 
+                                     AlignItems="AlignItems.Center"
+                                     Style="margin-top:10px">
+
                             <RadzenButton 
                                 Text="View Details"
                                 Size="ButtonSize.Small"
                                 Click="@(() => GoToDetails(a.AnimalId))" />
-                        <RadzenButton Icon="@(IsSaved(a.AnimalId) ? "favorite" : "favorite_border")"
-                                      Style="@(IsSaved(a.AnimalId) ? "color:red;" : "color:gray;")"
-                                      ButtonStyle="ButtonStyle.Light"
-                                      Size="ButtonSize.Small"
-                                      Click="@(() => ToggleSave(a.AnimalId))" />
+
+                            @if (CurrentUser.IsAuthenticated && CurrentUser.UserType == "Adopter")
+                            {
+                                <RadzenButton Icon="@(IsSaved(a.AnimalId) ? "favorite" : "favorite_border")"
+                                              Style="@GetHeartStyle(a.AnimalId)"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Size="ButtonSize.Small"
+                                              Click="@(() => ToggleSave(a.AnimalId))" />
+                            }
                         </RadzenStack>
                     </div>
             </RadzenCard>
@@ -81,7 +94,7 @@
 @code {
     // Holds all animals displayed on the page
     private List<Animal> animals = new();
-
+    private HashSet<int> savedAnimalIds = new();
     private int currentAdopterId;
 
     // Loads available animals from the database,
@@ -94,6 +107,48 @@
             .Include(a => a.Shelter)
             .Where(a => a.Available)
             .AsQueryable();
+
+        // Apply user filters only if they are not default values
+        if (!string.IsNullOrWhiteSpace(userFilter.UserSex) && userFilter.UserSex != "No Preference")
+        {
+            query = query.Where(a => a.Sex == userFilter.UserSex);
+        }
+
+        if (userFilter.UserPet != null && !string.IsNullOrEmpty(userFilter.UserPet.TypeName))
+        {
+            query = query.Where(a => a.AnimalTypeId == userFilter.UserPet.AnimalTypeId);
+        }
+
+        if (userFilter.MinAge != -1)
+        {
+            query = query.Where(a => a.Age >= userFilter.MinAge);
+        }
+
+        if (userFilter.MaxAge != -1)
+        {
+            query = query.Where(a => a.Age <= userFilter.MaxAge);
+        }
+
+        animals = await query.ToListAsync();
+
+        // Load saved animal ids only for adopters
+        if (CurrentUser.IsAuthenticated && CurrentUser.UserType == "Adopter")
+        {
+            var adopter = await DbContext.Adopters
+                .FirstOrDefaultAsync(a => a.ApplicationUserId == CurrentUser.UserId);
+
+            if (adopter != null)
+            {
+                currentAdopterId = adopter.AdopterId;
+
+                var savedIds = await DbContext.SavedAnimals
+                    .Where(s => s.AdopterId == currentAdopterId)
+                    .Select(s => s.AnimalId)
+                    .ToListAsync();
+
+                savedAnimalIds = savedIds.ToHashSet();
+            }
+        }
     }
 
     private string FormatAge(int? months)
@@ -110,18 +165,26 @@
     }
 
     // Navigates to the details page for the selected animal
-    void GoToDetails(int animalId)
+    private void GoToDetails(int animalId)
     {
         NavigationManager.NavigateTo($"/animal-details/{animalId}");
     }
 
-    bool IsSaved(int animalId)
+    private bool IsSaved(int animalId)
     {
         return savedAnimalIds.Contains(animalId);
     }
 
-    async Task ToggleSave(int animalId)
+    private string GetHeartStyle(int animalId)
     {
+        return IsSaved(animalId) ? "color:red;" : "color:gray;";
+    }
+
+    private async Task ToggleSave(int animalId)
+    {
+        if (currentAdopterId == 0)
+            return;
+
         if (IsSaved(animalId))
         {
             var saved = await DbContext.SavedAnimals
@@ -131,6 +194,7 @@
             {
                 DbContext.SavedAnimals.Remove(saved);
                 await DbContext.SaveChangesAsync();
+
                 savedAnimalIds.Remove(animalId);
             }
         }
