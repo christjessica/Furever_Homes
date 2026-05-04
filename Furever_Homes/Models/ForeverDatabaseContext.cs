@@ -35,6 +35,7 @@ public partial class ForeverDatabaseContext : IdentityDbContext<ApplicationUser>
     public virtual DbSet<DogDetail> DogDetails { get; set; }
 
     public virtual DbSet<Shelter> Shelters { get; set; }
+    public virtual DbSet<SavedAnimal> SavedAnimals { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
@@ -213,12 +214,13 @@ public partial class ForeverDatabaseContext : IdentityDbContext<ApplicationUser>
                 .HasMaxLength(100)
                 .IsUnicode(false);
             entity.Property(e => e.PhotoUrl)
-                .HasMaxLength(255)
+                .HasMaxLength(1000)
                 .IsUnicode(false);
 
-            entity.HasOne(d => d.Animal).WithOne(p => p.AnimalPhoto)
-                .HasForeignKey<AnimalPhoto>(d => d.AnimalId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+            entity.HasOne(d => d.Animal)
+                .WithMany(p => p.AnimalPhotos)
+                .HasForeignKey(d => d.AnimalId)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_AnimalPhoto_Animal");
         });
 
@@ -346,6 +348,26 @@ public partial class ForeverDatabaseContext : IdentityDbContext<ApplicationUser>
             entity.HasOne(e => e.ApplicationUser)
                 .WithOne()
                 .HasForeignKey<Shelter>(e => e.ApplicationUserId);
+        });
+
+        modelBuilder.Entity<SavedAnimal>(entity =>
+        {
+            entity.ToTable("SavedAnimal");
+
+            entity.HasKey(e => e.SavedAnimalId);
+
+            entity.HasIndex(e => new { e.AdopterId, e.AnimalId })
+                .IsUnique();
+
+            entity.HasOne(e => e.Adopter)
+                .WithMany(e => e.SavedAnimals)
+                .HasForeignKey(e => e.AdopterId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Animal)
+                .WithMany()
+                .HasForeignKey(e => e.AnimalId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         OnModelCreatingPartial(modelBuilder);

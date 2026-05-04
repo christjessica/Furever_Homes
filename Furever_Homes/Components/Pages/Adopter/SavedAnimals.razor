@@ -1,0 +1,143 @@
+﻿@page "/adopter-dashboard/saved-animals"
+@rendermode InteractiveServer
+
+@using Furever_Homes.Models
+@using Furever_Homes.Services
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@using Radzen.Blazor
+
+@inject Furever_Homes.Models.ForeverDatabaseContext DbContext
+@inject NavigationManager NavigationManager
+@inject CurrentUserService CurrentUser
+@inject NotificationService NotificationService
+
+<h3>Saved Animals</h3>
+
+<RadzenRow Gap="1rem">
+    @foreach (var a in animals)
+    {
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            <RadzenCard Style="padding:0; overflow:hidden; max-width:400px">
+
+                @{
+                    var primaryPhoto = a.AnimalPhotos
+                        .FirstOrDefault(p => p.IsPrimary)?.PhotoUrl;
+                }
+
+                @if (!string.IsNullOrWhiteSpace(primaryPhoto))
+                {
+                    <img src="@primaryPhoto"
+                         style="width:100%; height:220px; object-fit:cover" />
+                }
+                else
+                {
+                    <div style="width:100%;
+                                height:220px;
+                                background-color:#eee;
+                                display:flex;
+                                align-items:center;
+                                justify-content:center">
+                        <span style="color:#888;">No Photo Available</span>
+                    </div>
+                }
+
+                <div style="padding:15px">
+                    <h3>@a.Name</h3>
+
+                    <p style="color:gray">
+                        @a.Sex • @FormatAge(a.Age) • @a.Breed?.BreedName
+                    </p>
+
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                        <RadzenButton Text="View Details"
+                                      Size="ButtonSize.Small"
+                                      Click="@(() => GoToDetails(a.AnimalId))" />
+
+                        <!-- Remove/Unsave -->
+                        <RadzenButton Icon="favorite"
+                                      Style="color:red;"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Size="ButtonSize.Small"
+                                      Click="@(() => ToggleSave(a.AnimalId))" />
+                    </RadzenStack>
+                </div>
+)
+
+            </RadzenCard>
+        </RadzenColumn>
+    }
+</RadzenRow>
+
+
+@code {
+    private List<Animal> animals = new();
+    private HashSet<int> savedAnimalIds = new();
+    private int currentAdopterId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var adopter = await DbContext.Adopters
+            .FirstOrDefaultAsync(adopter => adopter.ApplicationUserId == CurrentUser.UserId);
+
+        if (adopter == null)
+            return;
+
+        currentAdopterId = adopter.AdopterId;
+
+        animals = await DbContext.SavedAnimals
+                .Where(s => s.AdopterId == currentAdopterId)
+                .Include(s => s.Animal)
+                    .ThenInclude(a => a.Breed)
+                .Include(s => s.Animal)
+                    .ThenInclude(a => a.AnimalPhotos)
+                .Select(s => s.Animal)
+                .ToListAsync();
+
+        savedAnimalIds = animals
+            .Select(a => a.AnimalId)
+            .ToHashSet();
+    }
+
+    // Converts total months into readable format (years/months)
+    private string FormatAge(int? months)
+    {
+        if (months == null) return "Unknown";
+        if (months < 12) return $"{months} months";
+
+        int years = months.Value / 12;
+        int remainingMonths = months.Value % 12;
+
+        return remainingMonths == 0
+            ? $"{years} years"
+            : $"{years} years {remainingMonths} months";
+    }
+
+    // Navigates to the details page for the selected animal
+    void GoToDetails(int animalId)
+    {
+        NavigationManager.NavigateTo($"/animal-details/{animalId}");
+    }
+
+    bool IsSaved(int animalId)
+    {
+        return savedAnimalIds.Contains(animalId);
+    }
+
+    async Task ToggleSave(int animalId)
+    {
+        var saved = await DbContext.SavedAnimals
+            .FirstOrDefaultAsync(s => s.AnimalId == animalId && s.AdopterId == currentAdopterId);
+
+        if (saved != null)
+        {
+            DbContext.SavedAnimals.Remove(saved);
+            await DbContext.SaveChangesAsync();
+
+            savedAnimalIds.Remove(animalId);
+            animals.RemoveAll(a => a.AnimalId == animalId);
+        }
+    }
+}
+

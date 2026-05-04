@@ -2,53 +2,123 @@
 @rendermode InteractiveServer
 
 @using Furever_Homes.Models
+@using Furever_Homes.Services
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using Radzen
 @using Radzen.Blazor
 
 @inject Furever_Homes.Models.ForeverDatabaseContext DbContext
+@inject Furever_Homes.Services.CurrentUserService CurrentUser
 @inject NavigationManager NavigationManager
+
+@* Displays all available animals in a card-based layout.
+   Each card shows the primary photo, basic info, and a link to details. *@
+
 
 <h2>Available Animals</h2>
 
-<RadzenStack Gap="1rem">
+@* Responsive grid:
+   - 1 column on small screens
+   - 2 on medium
+   - 3 on large *@
+<RadzenRow Gap="1rem">
     @foreach (var a in animals)
     {
-        <RadzenCard Style="padding:15px">
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            @* Individual animal card *@
+            <RadzenCard Style="padding:0; overflow:hidden; max-width:400px">
 
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                <h3>@a.Name</h3>
-                <span><b>@FormatAge(a.Age)</b></span>
-            </RadzenStack>
+                @* Get the primary photo for this animal *@
+                @* Because of the database constraint, there should only ever be one primary photo *@
+                @{
+                    var primaryPhoto = a.AnimalPhotos.FirstOrDefault(p => p.IsPrimary)?.PhotoUrl;
+                }
 
-            <p><b>Breed:</b> @a.Breed?.BreedName</p> <!-- fix later -->
-            <p><b>Color:</b> @a.Color</p>
+                @* Show image if available, otherwise show placeholder *@
+                @if (!string.IsNullOrWhiteSpace(primaryPhoto))
+                {
+                    <img src="@primaryPhoto"
+                    style="width:100%; height:220px; object-fit:cover" />
+                }
+                else
+                {
+                    <div style="width:100%; 
+                                height:220px; 
+                                background-color:#eee; 
+                                display:flex; 
+                                align-items:center; 
+                                justify-content:center">
+                        <span style="color:#888;">No Photo Available</span>
+                    </div>
+                }
 
-            <p><b>Description:</b> @a.Description</p>
+                    @* Animal basic info: name, sex, age, breed *@
+                    <div style="padding:15px">
 
-            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
-                <span>@a.Sex</span>
-                <span>@(a.Vaccinated ? "Vaccinated" : "Not Vaccinated")</span>
-            </RadzenStack>
-            <RadzenButton Text="View Details"
-                          Click="@(() => GoToDetails(a.AnimalId))" />
+                        <!-- Name -->
+                        <h3 style="margin-bottom:5px">@a.Name</h3>
 
-        </RadzenCard>
+                        <!-- Subtitle -->
+                        <p style="margin:0; color:gray;">
+                            @a.Sex • @FormatAge(a.Age) • @a.Breed?.BreedName
+                        </p>
+
+                        @* Navigate to full details page for this animal *@
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                            <RadzenButton 
+                                Text="View Details"
+                                Size="ButtonSize.Small"
+                                Click="@(() => GoToDetails(a.AnimalId))" />
+                        <RadzenButton Icon="@(IsSaved(a.AnimalId) ? "favorite" : "favorite_border")"
+                                      Style="@(IsSaved(a.AnimalId) ? "color:red;" : "color:gray;")"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Size="ButtonSize.Small"
+                                      Click="@(() => ToggleSave(a.AnimalId))" />
+                        </RadzenStack>
+                    </div>
+            </RadzenCard>
+        </RadzenColumn>
     }
-</RadzenStack>
+</RadzenRow>
 
 @code {
+    // Holds all animals displayed on the page
     private List<Animal> animals = new();
 
+    private int currentAdopterId;
+    private HashSet<int> savedAnimalIds = new();
+
+    // Loads available animals from the database,
+    // including related data (breed, photos, shelter)
     protected override async Task OnInitializedAsync()
     {
         animals = await DbContext.Animals
             .Include(a => a.Breed)
+            .Include(a => a.AnimalPhotos)
+            .Include(a => a.Shelter)
             .Where(a => a.Available)
             .ToListAsync();
+
+        var adopter = await DbContext.Adopters
+            .FirstOrDefaultAsync(a => a.ApplicationUserId == CurrentUser.UserId);
+
+        if (adopter == null)
+        {
+            return;
+        }
+
+        currentAdopterId = adopter.AdopterId;
+
+        var savedIds = await DbContext.SavedAnimals
+            .Where(s => s.AdopterId == currentAdopterId)
+            .Select(s => s.AnimalId)
+            .ToListAsync();
+
+        savedAnimalIds = savedIds.ToHashSet();
     }
 
+    // Converts total months into readable format (years/months)
     private string FormatAge(int? months)
     {
         if (months == null) return "Unknown";
@@ -62,8 +132,43 @@
             : $"{years} years {remainingMonths} months";
     }
 
+    // Navigates to the details page for the selected animal
     void GoToDetails(int animalId)
     {
         NavigationManager.NavigateTo($"/animal-details/{animalId}");
+    }
+
+    bool IsSaved(int animalId)
+    {
+        return savedAnimalIds.Contains(animalId);
+    }
+
+    async Task ToggleSave(int animalId)
+    {
+        if (IsSaved(animalId))
+        {
+            var saved = await DbContext.SavedAnimals
+                .FirstOrDefaultAsync(s => s.AnimalId == animalId && s.AdopterId == currentAdopterId);
+
+            if (saved != null)
+            {
+                DbContext.SavedAnimals.Remove(saved);
+                await DbContext.SaveChangesAsync();
+                savedAnimalIds.Remove(animalId);
+            }
+        }
+        else
+        {
+            var savedAnimal = new SavedAnimal
+            {
+                AdopterId = currentAdopterId,
+                AnimalId = animalId
+            };
+
+            DbContext.SavedAnimals.Add(savedAnimal);
+            await DbContext.SaveChangesAsync();
+
+            savedAnimalIds.Add(animalId);
+        }
     }
 }

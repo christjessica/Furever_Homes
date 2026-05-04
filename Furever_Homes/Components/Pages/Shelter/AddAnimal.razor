@@ -2,34 +2,28 @@
 @rendermode InteractiveServer
 
 @using Furever_Homes.Models
+@using Furever_Homes.Services
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using Radzen
 @using Radzen.Blazor
 
 @inject UserManager<ApplicationUser> UserManager
+@inject CurrentUserService CurrentUser
 @inject Furever_Homes.Models.ForeverDatabaseContext DbContext
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
 
+@*-------------------------------------------------------------------------------------------*@
+
+@* Main form by shelters to add a new animal listing *@
+@* Most fields bind directly to _animal. *@
+@* Some extra fields, like age and photos, are handled separately before saving. *@
+
 <RadzenCard>
     <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
 
-        <RadzenLabel Text="Enter Animal Information" />
-        <RadzenFormField>
-            <RadzenDropDown TValue="int"
-                            @bind-Value=@_animal.ShelterId
-                            Name="Shelter"
-                            Data=@_shelterInfo
-                            TextProperty="@nameof(ShelterInfo.Name)"
-                            ValueProperty="@nameof(ShelterInfo.Id)"
-                            AllowFiltering="true"
-                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
-                            FilterOperator="StringFilterOperator.Contains"
-                            Placeholder="Select Shelter"
-                            Style="width: 100%" />
-        </RadzenFormField>
-        <RadzenRequiredValidator Component="Shelter" Text="Please select a shelter." />
+        @* Basic animal information saved directly into the Animal table. *@
 
         <RadzenFormField Text="Animal Name">
             <RadzenTextBox @bind-Value="_animal.Name"
@@ -38,6 +32,10 @@
                            Style="width: 100%" />
         </RadzenFormField>
         <RadzenRequiredValidator Component="Name" Text="Animal name is required." />
+
+@*-------------------------------------------------------------------------------------------*@
+
+        @* Animal type controls whether cat-specific or dog-specific fields are shown. *@
 
         <RadzenFormField Text="Select Animal Type">
             <RadzenSelectBar TValue="int"
@@ -55,7 +53,10 @@
         </RadzenFormField>
         <RadzenRequiredValidator Component="AnimalType" Text="Please select an animal type." />
 
-        <!-- Breed -->
+@*-------------------------------------------------------------------------------------------*@
+
+        @* Breed list is filtered based on the selected animal type. *@
+
         <RadzenFormField Text="Select Breed">
             <RadzenDropDown TValue="int"
                             @bind-Value="@_animal.BreedId"
@@ -72,6 +73,8 @@
         </RadzenFormField>
         <RadzenRequiredValidator Component="Breed" Text="Please select a breed or unknown." />
 
+@*-------------------------------------------------------------------------------------------*@
+
         <RadzenFormField Text="Select Sex">
             <RadzenSelectBar TValue="string"
                              @bind-Value="_animal.Sex"
@@ -85,6 +88,9 @@
             </RadzenSelectBar>
         </RadzenFormField>
         <RadzenRequiredValidator Component="Sex" Text="Please select a sex." />
+
+@*-------------------------------------------------------------------------------------------*@
+        @* User enters age as years/months, but the database stores total age in months. *@
 
         <RadzenFormField Text="Enter Age">
             <RadzenLabel Text="Age (Years)" />
@@ -101,6 +107,8 @@
                            Style="width: 100%" />
         </RadzenFormField>
 
+@*-------------------------------------------------------------------------------------------*@
+
         <RadzenFormField Text="Enter Weight (Pounds)">
             <RadzenNumeric @bind-Value="_animal.Weight"
                            TValue="decimal?"
@@ -108,12 +116,19 @@
                            Style="width: 100%" />
         </RadzenFormField>
 
+@*-------------------------------------------------------------------------------------------*@
+
         <RadzenFormField Text="Enter Color">
             <RadzenTextBox @bind-Value="_animal.Color"
                            Name="Color"
                            MaxLength="50"
                            Style="width: 100%" />
         </RadzenFormField>
+
+@*-------------------------------------------------------------------------------------------*@
+
+        @* Show extra detail fields depending on whether the selected animal is a cat or dog. *@
+        @* These details are saved into CatDetail or DogDetail after the animal is created. *@
 
         @if (SelectedAnimalTypeName == "Cat")
         {
@@ -213,6 +228,11 @@
         </RadzenFormField>
         <RadzenRequiredValidator Component="SpayedNeutered" Text="Please select spayed/neutered status." />
 
+@*-------------------------------------------------------------------------------------------*@
+
+        @* Vaccination status affects availability. *@
+        @*Animals cannot be marked available unless vaccinated. *@
+
         <RadzenFormField Text="Select Vaccination Status">
             <RadzenSelectBar TValue="bool"
                              @bind-Value="_animal.Vaccinated"
@@ -227,17 +247,26 @@
         </RadzenFormField>
         <RadzenRequiredValidator Component="Vaccinated" Text="Vaccination status required." />
 
+@*-------------------------------------------------------------------------------------------*@
+
+
         <RadzenFormField Text="Enter Description">
             <RadzenTextArea @bind-Value="_animal.Description"
                             Rows="4"
                             Style="width: 100%" />
         </RadzenFormField>
 
+@*-------------------------------------------------------------------------------------------*@
+
         <RadzenFormField Text="Enter Internal Notes (not visible to adopters)">
             <RadzenTextArea @bind-Value="_animal.Notes"
                             Rows="4"
                             Style="width: 100%" />
         </RadzenFormField>
+
+@*-------------------------------------------------------------------------------------------*@
+
+        @* Availability is disabled when the animal is not vaccinated. *@
 
         <RadzenFormField Text="Select Availability">
             <RadzenSelectBar TValue="bool"
@@ -253,7 +282,54 @@
         </RadzenFormField>
         <RadzenRequiredValidator Component="Available" Text="Availability status required." />
 
-        <!-- Submit -->
+@*-------------------------------------------------------------------------------------------*@
+
+        <RadzenText TextStyle="TextStyle.DisplayH4">Add Photos</RadzenText>
+        <RadzenText TextStyle="TextStyle.Subtitle2">Only one can be primary photo seen on the Browse page.</RadzenText>
+
+        @* Only allow the user to add photo inputs while fewer than 5 photos have been added. *@
+
+        @if (animalPhotos.Count < 5)
+        {
+            <RadzenTextBox @bind-Value="NewPhotoUrl" Placeholder="Photo URL" />
+            <RadzenTextBox @bind-Value="NewCaption" Placeholder="Caption (optional)" />
+
+            <RadzenCheckBox @bind-Value="NewIsPrimary" />
+            <label>Make this the primary photo</label>
+
+            <RadzenButton Text="Add Photo" Click="AddPhoto" />
+        }
+        else
+        {
+            <p>You can only add up to five photos.</p>
+        }
+
+        @* Display the photos currently added to the temporary list. These are not in the database yet. *@
+
+        @foreach (var photo in animalPhotos)
+        {
+            <div class="photo-card">
+                <img src="@photo.PhotoUrl" style="width:150px;" />
+
+                <p>@photo.Caption</p>
+
+                <RadzenCheckBox Value="@photo.IsPrimary"
+                    Change="@((bool? value) =>
+                    {
+                        if (value == true)
+                            SetPrimary(photo);
+                    })" />
+
+                <label>Primary Photo</label>
+
+                <RadzenButton
+                    Text="Remove"
+                    ButtonStyle="ButtonStyle.Danger"
+                              Click="@(() => RemovePhoto(photo))" />
+            </div>
+        }
+
+        @* Submit Button *@
         <RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="SaveAnimal" />
 
     </RadzenStack>
@@ -261,23 +337,44 @@
 
 @code {
 
+    // Main animal object bound to most of the form fields.
+    // This is saved to the Animal table.
     private Animal _animal = new();
+
+    // Age is entered separately as years/months, then converted into total months before saving.
     private int? years;
     private int? months;
 
+    // Temporary photo list used by the UI.
+    // Photos are not saved to the database until after the animal is saved.
+    private List<AnimalPhotoInfo> animalPhotos = new List<AnimalPhotoInfo>();
+    private string NewPhotoUrl = "";
+    private string NewCaption = "";
+    private bool NewIsPrimary = false;
+
+    // Lookup lists used to fill dropdowns/select bars.
     private List<BreedInfo> _breedInfo = new();
     private List<ShelterInfo> _shelterInfo = new();
     private List<AnimalTypeInfo> _animalTypeInfo = new();
+
+    // This list changes depending on which animal type is selected.
     private List<BreedInfo> _filteredBreedInfo = new();
 
+    // Gets the selected animal type name from the selected AnimalTypeId.
+    // Used to decide whether to show cat-specific or dog-specific fields.
     private string SelectedAnimalTypeName =>
         _animalTypeInfo
             .FirstOrDefault(t => t.Id == _animal.AnimalTypeId)
             ?.Name ?? "";
 
+    // Temporary detail objects for cat/dog-specific fields.
+    // Only one of these is saved depending on the selected animal type.
     private DogDetail _dogDetails = new();
     private CatDetail _catDetails = new();
 
+
+    // Options for cat coat and dog coat dropdowns. 
+    // These could also be stored in the database, but hardcoding is simpler for this example.
     private List<string> catCoatOptions = new()
     {
         "Hairless",
@@ -296,6 +393,8 @@
         "Short"
     };
 
+    // Runs when the page first loads.
+    // Sets default values and loads dropdown/select options from the database.
     protected override async Task OnInitializedAsync()
     {
         _animal = new Animal
@@ -333,10 +432,20 @@
             .ToListAsync();
     }
 
+    // Saves the animal and any related details/photos to the database.
+    // Order matters:
+    // 1. Validate form rules
+    // 2. Convert age to months
+    // 3. Find the current shelter
+    // 4. Save animal first to get AnimalId
+    // 5. Save cat/dog details using AnimalId
+    // 6. Save photos using AnimalId
+
     private async Task SaveAnimal()
     {
         try
         {
+            // Extra safety check: an animal should not be available unless vaccinated.
             if (_animal.Available && !_animal.Vaccinated)
             {
                 NotificationService.Notify(new NotificationMessage
@@ -349,6 +458,8 @@
                 return;
             }
 
+            // Convert years/months into total months for the database.
+            // If both are blank, age stays unknown/null.
             if (years == null && months == null)
             {
                 _animal.Age = null; // unknown
@@ -358,7 +469,66 @@
                 _animal.Age = ((years ?? 0) * 12) + (months ?? 0);
             }
 
+            // Find the shelter profile connected to the currently logged-in user.
+            var shelter = await DbContext.Shelters
+                .FirstOrDefaultAsync(s => s.ApplicationUserId == CurrentUser.UserId);
+
+            if (shelter == null)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Shelter not found.",
+                    Detail = "Could not find a shelter profile for this account."
+                });
+                return;
+            }
+
+            _animal.ShelterId = shelter.ShelterId;
+
+            // Save animal first so the database generates AnimalId.
             DbContext.Animals.Add(_animal);
+            await DbContext.SaveChangesAsync();
+
+            // Save the matching detail record based on the selected animal type.
+            if (SelectedAnimalTypeName == "Cat")
+            {
+                var catDetail = new CatDetail
+                {
+                    AnimalId = _animal.AnimalId,
+                    CatCoat = _catDetails.CatCoat,
+                    Fivpositive = _catDetails.Fivpositive,
+                    LitterTrained = _catDetails.LitterTrained,
+                    Declawed = _catDetails.Declawed
+                };
+
+                DbContext.CatDetails.Add(catDetail);
+            }
+            else if (SelectedAnimalTypeName == "Dog")
+            {
+                var dogDetail = new DogDetail
+                {
+                    AnimalId = _animal.AnimalId,
+                    DogCoat = _dogDetails.DogCoat,
+                    HouseTrained = _dogDetails.HouseTrained,
+                    Heartworm = _dogDetails.Heartworm
+                };
+
+                DbContext.DogDetails.Add(dogDetail);
+            }
+
+            // Save each temporary photo as an AnimalPhoto record linked to this animal.
+            foreach (var photo in animalPhotos)
+            {
+                var animalPhoto = new AnimalPhoto
+                {
+                    AnimalId = _animal.AnimalId,
+                    PhotoUrl = photo.PhotoUrl,
+                    Caption = photo.Caption,
+                    IsPrimary = photo.IsPrimary
+                };
+                DbContext.AnimalPhotos.Add(animalPhoto);
+            }
             await DbContext.SaveChangesAsync();
 
             NotificationService.Notify(new NotificationMessage
@@ -367,6 +537,9 @@
                 Summary = "Animal saved",
                 Detail = "The animal was added successfully."
             });
+
+            // Redirect to the shelter dashboard or animal details page after saving.
+            NavigationManager.NavigateTo("/shelter-dashboard");
         }
         catch (Exception ex)
         {
@@ -379,6 +552,8 @@
         }
     }
 
+    // Runs when the user selects Cat or Dog.
+    // Filters breeds to only show breeds for that animal type.
     private void OnAnimalTypeChanged(int value)
     {
         _animal.AnimalTypeId = value;
@@ -392,6 +567,8 @@
             .First(b => b.Name.Contains("Unknown")).Id;
     }
 
+    // Runs when vaccination status changes.
+    // If not vaccinated, automatically force Available to false.
     private void OnVaccinatedChanged(bool value)
     {
         _animal.Vaccinated = value;
@@ -402,6 +579,84 @@
         }
     }
 
+    // Ensures only one photo is marked as primary.
+    private void SetPrimary(AnimalPhotoInfo selectedPhoto)
+    {
+        foreach (var photo in animalPhotos)
+        {
+            photo.IsPrimary = false;
+        }
+        selectedPhoto.IsPrimary = true;
+    }
+
+    // Adds a photo to the temporary photo list.
+    // Enforces the 5-photo limit and primary-photo rule.
+    private void AddPhoto()
+    {   
+        if (animalPhotos.Count >= 5)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Photo Limit Reached",
+                Detail = "You can only add up to 5 photos."
+            });
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(NewPhotoUrl))
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Missing Photo URL",
+                Detail = "Please enter a photo URL before adding."
+            });
+            return;
+        }
+
+        var photo = new AnimalPhotoInfo
+            {
+                PhotoUrl = NewPhotoUrl,
+                Caption = NewCaption,
+                IsPrimary = NewIsPrimary
+            };
+
+        if (photo.IsPrimary)
+        {
+            foreach (var p in animalPhotos)
+            {
+                p.IsPrimary = false;
+            }
+        }
+
+        if (animalPhotos.Count == 0)
+        {
+            photo.IsPrimary = true;
+        }
+
+        animalPhotos.Add(photo);
+
+        // Clear input fields
+        NewPhotoUrl = "";
+        NewCaption = "";
+        NewIsPrimary = false;
+    }
+
+    // Removes a photo from the temporary list.
+    // Since photos are not saved yet, this does not affect the database.
+    private void RemovePhoto(AnimalPhotoInfo photo)
+    {
+        animalPhotos.Remove(photo);
+
+        if (!animalPhotos.Any(p => p.IsPrimary) && animalPhotos.Count > 0)
+        {
+            animalPhotos[0].IsPrimary = true;
+        }
+    }
+
+    // Small helper classes used only by this page.
+    // They make dropdowns and temporary photo handling easier.
     class BreedInfo
     {
         public int Id { get; set; }
@@ -419,6 +674,13 @@
     {
         public int Id { get; set; }
         public string Name { get; set; }
+    }
+
+    class AnimalPhotoInfo
+    {
+        public string PhotoUrl { get; set; } = "";
+        public string? Caption { get; set; }
+        public bool IsPrimary { get; set; }
     }
 }
 

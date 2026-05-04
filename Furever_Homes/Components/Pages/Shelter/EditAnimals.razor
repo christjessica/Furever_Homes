@@ -57,14 +57,57 @@ else
                 </Items>
             </RadzenSelectBar>
 
+
+            <RadzenText TextStyle="TextStyle.DisplayH4">Add Photos</RadzenText>
+            <RadzenText TextStyle="TextStyle.Subtitle2">Only one can be primary photo seen on the Browse page.</RadzenText>
+
+            @* Only allow the user to add photo inputs while fewer than 5 photos have been added. *@
+
+            @if (animalPhotos.Count < 5)
+            {
+                <RadzenTextBox @bind-Value="NewPhotoUrl" Placeholder="Photo URL" />
+                <RadzenTextBox @bind-Value="NewCaption" Placeholder="Caption (optional)" />
+
+                <RadzenCheckBox @bind-Value="NewIsPrimary" />
+                <label>Make this the primary photo</label>
+
+                <RadzenButton Text="Add Photo" Click="AddPhoto" />
+            }
+            else
+            {
+                <p>You can only add up to five photos.</p>
+            }
+
+            @* Display existing and newly added photos for this animal. *@
+            @foreach (var photo in animalPhotos)
+            {
+                <div class="photo-card">
+                    <img src="@photo.PhotoUrl" style="width:150px;" />
+
+                    <p>@photo.Caption</p>
+
+                    <RadzenCheckBox Value="@photo.IsPrimary"
+                                    Change="@((bool? value) =>
+                                                        {
+                                                            if (value == true)
+                                                                SetPrimary(photo);
+                                                        })" />
+
+            <label>Primary Photo</label>
+
+                                        <RadzenButton Text="Remove"
+                                                      ButtonStyle="ButtonStyle.Danger"
+                                                      Click="@(() => RemovePhoto(photo))" />
+                                    </div>
+                }
+
             <RadzenButton Text="Save Changes"
                           ButtonStyle="ButtonStyle.Primary"
                           Click="SaveChanges" />
 
-            <RadzenButton Text="Back to Dashboard"
+            <RadzenButton Text="Back to View Animals"
                           ButtonStyle="ButtonStyle.Primary"
-                          Click="@(() => NavigationManager.NavigateTo("/shelter-dashboard"))" />
-
+                          Click="@(() => GoBack())" />
         </RadzenStack>
     </RadzenCard>
 }
@@ -73,6 +116,13 @@ else
     [Parameter] public int AnimalId { get; set; }
 
     private Animal? _animal;
+
+    // Temporary photo list used by the UI.
+    // Photos are not saved to the database until after the animal is saved.
+    private List<AnimalPhoto> animalPhotos = new();
+    private string NewPhotoUrl = "";
+    private string NewCaption = "";
+    private bool NewIsPrimary = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -83,6 +133,8 @@ else
         }
 
         _animal = await DbContext.Animals
+            .Include(a => a.Breed)
+            .Include(a => a.AnimalPhotos)
             .FirstOrDefaultAsync(a => a.AnimalId == AnimalId);
 
         if (_animal == null)
@@ -93,8 +145,11 @@ else
                 Summary = "Error",
                 Detail = "Animal not found."
             });
-            NavigationManager.NavigateTo("/shelter-dashboard");
+            NavigationManager.NavigateTo("/shelter-dashboard/view-animals");
+            return;
         }
+
+        animalPhotos = _animal.AnimalPhotos.ToList();
     }
 
     private void OnVaccinationChanged(bool vaccinated)
@@ -125,6 +180,14 @@ else
                 return;
             }
 
+            // Holds existing and newly added photos for the animal being edited.
+            // Existing photos are already in the database.
+            // New photos are added to the database when Save Changes is clicked.
+            foreach (var photo in animalPhotos.Where(p => p.PhotoId == 0))
+            {
+                DbContext.AnimalPhotos.Add(photo);
+            }
+
             await DbContext.SaveChangesAsync();
 
             NotificationService.Notify(new NotificationMessage
@@ -146,5 +209,92 @@ else
                 Detail = ex.InnerException?.Message ?? ex.Message
             });
         }
+    }
+
+    // Ensures only one photo is marked as primary.
+    private void SetPrimary(AnimalPhoto selectedPhoto)
+    {
+        foreach (var photo in animalPhotos)
+        {
+            photo.IsPrimary = false;
+        }
+
+        selectedPhoto.IsPrimary = true;
+    }
+
+    // Adds a photo to the temporary photo list.
+    // Enforces the 5-photo limit and primary-photo rule.
+    private void AddPhoto()
+    {
+        if (animalPhotos.Count >= 5)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Photo Limit Reached",
+                Detail = "You can only add up to 5 photos."
+            });
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(NewPhotoUrl))
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Missing Photo URL",
+                Detail = "Please enter a photo URL before adding."
+            });
+            return;
+        }
+
+        var photo = new AnimalPhoto
+        {
+            AnimalId = _animal!.AnimalId,
+            PhotoUrl = NewPhotoUrl,
+            Caption = NewCaption,
+            IsPrimary = NewIsPrimary
+        };
+
+        if (animalPhotos.Count == 0)
+        {
+            photo.IsPrimary = true;
+        }
+        else if (photo.IsPrimary)
+        {
+            foreach (var p in animalPhotos)
+            {
+                p.IsPrimary = false;
+            }
+        }
+
+        animalPhotos.Add(photo);
+
+        // Clear input fields
+        NewPhotoUrl = "";
+        NewCaption = "";
+        NewIsPrimary = false;
+    }
+
+    // Removes a photo from the temporary list.
+    // Since photos are not saved yet, this does not affect the database.
+    private void RemovePhoto(AnimalPhoto photo)
+    {
+        animalPhotos.Remove(photo);
+
+        if (photo.PhotoId != 0)
+        {
+            DbContext.AnimalPhotos.Remove(photo);
+        }
+
+        if (!animalPhotos.Any(p => p.IsPrimary) && animalPhotos.Count > 0)
+        {
+            animalPhotos[0].IsPrimary = true;
+        }
+    }
+
+    void GoBack()
+    {
+        NavigationManager.NavigateTo("/shelter-dashboard/view-animals");
     }
 }

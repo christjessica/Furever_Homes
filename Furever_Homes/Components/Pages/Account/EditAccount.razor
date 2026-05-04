@@ -1,0 +1,53 @@
+﻿@page "/edit-account"
+@rendermode InteractiveServer
+
+@using Furever_Homes.Models
+@using Furever_Homes.Services
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@using Radzen.Blazor
+
+@inject UserManager<ApplicationUser> UserManager
+@inject CurrentUserService CurrentUser
+@inject Furever_Homes.Models.ForeverDatabaseContext DbContext
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+
+<h3>Edit Account</h3>
+
+@code {
+    private Adopter? adopter;
+    private Shelter? shelter;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (CurrentUser.UserType == "Adopter")
+        {
+            adopter = await DbContext.Adopters
+                .FirstOrDefaultAsync(a => a.ApplicationUserId == CurrentUser.UserId);
+        }
+        else if (CurrentUser.UserType == "Shelter")
+        {
+            shelter = await DbContext.Shelters
+                .FirstOrDefaultAsync(s => s.ApplicationUserId == CurrentUser.UserId);
+        }
+    }
+
+    private async Task SaveAccount()
+    {
+        await DbContext.SaveChangesAsync();
+
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Account updated",
+            Detail = "Your account information was saved."
+        });
+
+        if (CurrentUser.UserType == "Adopter")
+            NavigationManager.NavigateTo("/adopter-dashboard");
+        else if (CurrentUser.UserType == "Shelter")
+            NavigationManager.NavigateTo("/shelter-dashboard");
+    }
+}

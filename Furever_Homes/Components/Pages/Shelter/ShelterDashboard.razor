@@ -12,12 +12,12 @@
 @inject NavigationManager NavigationManager
 @inject CurrentUserService CurrentUser
 
+<RadzenButton Text="Edit Account" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="EditAccount" />
 <RadzenButton Text="Add Animal" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="AddAnimal"/>
 <RadzenButton Text="View Animals" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="ViewAnimals" />
 
 
 @code {
-    List<Animal> animals = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -42,9 +42,11 @@
         var shelter = await DbContext.Shelters
             .FirstOrDefaultAsync(s => s.ApplicationUserId == CurrentUser.UserId);
 
-        animals = await DbContext.Animals
-            .Where(a => a.ShelterId == shelter.ShelterId)
-            .ToListAsync();
+        if (shelter == null)
+        {
+            NavigationManager.NavigateTo("/");
+            return;
+        }
     }
 
     private void AddAnimal()
@@ -55,5 +57,10 @@
     private void ViewAnimals()
     {
         NavigationManager.NavigateTo("/shelter-dashboard/view-animals");
+    }
+
+    private void EditAccount()
+    {
+        NavigationManager.NavigateTo("/edit-account");
     }
 }

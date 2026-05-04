@@ -35,8 +35,7 @@ public partial class Animal
 
     public virtual ICollection<AdoptionApplication> AdoptionApplications { get; set; } = new List<AdoptionApplication>();
 
-    public virtual AnimalPhoto? AnimalPhoto { get; set; }
-
+    public virtual ICollection<AnimalPhoto> AnimalPhotos { get; set; } = new List<AnimalPhoto>();
     public virtual AnimalType AnimalType { get; set; } = null!;
 
     public virtual Breed? Breed { get; set; }

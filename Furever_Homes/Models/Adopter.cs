@@ -32,4 +32,5 @@ public partial class Adopter
     public virtual ApplicationUser? ApplicationUser { get; set; } = null!;
 
     public virtual ICollection<AdoptionApplication> AdoptionApplications { get; set; } = new List<AdoptionApplication>();
+    public virtual ICollection<SavedAnimal> SavedAnimals { get; set; } = new List<SavedAnimal>();
 }

@@ -4,6 +4,7 @@ using Furever_Homes.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Furever_Homes.Migrations
 {
     [DbContext(typeof(ForeverDatabaseContext))]
-    partial class ForeverDatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20260504035711_FixAnimalPhotoRelationship")]
+    partial class FixAnimalPhotoRelationship
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -469,30 +472,6 @@ namespace Furever_Homes.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Furever_Homes.Models.SavedAnimal", b =>
-                {
-                    b.Property<int>("SavedAnimalId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("SavedAnimalId"));
-
-                    b.Property<int>("AdopterId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("AnimalId")
-                        .HasColumnType("int");
-
-                    b.HasKey("SavedAnimalId");
-
-                    b.HasIndex("AnimalId");
-
-                    b.HasIndex("AdopterId", "AnimalId")
-                        .IsUnique();
-
-                    b.ToTable("SavedAnimal", (string)null);
-                });
-
             modelBuilder.Entity("Furever_Homes.Models.Shelter", b =>
                 {
                     b.Property<int>("ShelterId")
@@ -818,25 +797,6 @@ namespace Furever_Homes.Migrations
                     b.Navigation("Animal");
                 });
 
-            modelBuilder.Entity("Furever_Homes.Models.SavedAnimal", b =>
-                {
-                    b.HasOne("Furever_Homes.Models.Adopter", "Adopter")
-                        .WithMany("SavedAnimals")
-                        .HasForeignKey("AdopterId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Furever_Homes.Models.Animal", "Animal")
-                        .WithMany()
-                        .HasForeignKey("AnimalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Adopter");
-
-                    b.Navigation("Animal");
-                });
-
             modelBuilder.Entity("Furever_Homes.Models.Shelter", b =>
                 {
                     b.HasOne("Furever_Homes.Models.ApplicationUser", "ApplicationUser")
@@ -900,8 +860,6 @@ namespace Furever_Homes.Migrations
             modelBuilder.Entity("Furever_Homes.Models.Adopter", b =>
                 {
                     b.Navigation("AdoptionApplications");
-
-                    b.Navigation("SavedAnimals");
                 });
 
             modelBuilder.Entity("Furever_Homes.Models.AdoptionApplication", b =>

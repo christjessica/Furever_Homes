@@ -4,6 +4,7 @@ using Furever_Homes.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Furever_Homes.Migrations
 {
     [DbContext(typeof(ForeverDatabaseContext))]
-    partial class ForeverDatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20260504202647_AddSavedAnimals")]
+    partial class AddSavedAnimals
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -485,12 +488,11 @@ namespace Furever_Homes.Migrations
 
                     b.HasKey("SavedAnimalId");
 
+                    b.HasIndex("AdopterId");
+
                     b.HasIndex("AnimalId");
 
-                    b.HasIndex("AdopterId", "AnimalId")
-                        .IsUnique();
-
-                    b.ToTable("SavedAnimal", (string)null);
+                    b.ToTable("SavedAnimal");
                 });
 
             modelBuilder.Entity("Furever_Homes.Models.Shelter", b =>
