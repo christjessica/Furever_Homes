@@ -1,0 +1,33 @@
+﻿@page "/dashboard"
+@rendermode InteractiveServer
+
+@using Furever_Homes.Services
+
+@inject CurrentUserService CurrentUser
+@inject NavigationManager NavigationManager
+
+<p>Loading dashboard...</p>
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (!CurrentUser.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo("/sign-in");
+            return;
+        }
+
+        if (CurrentUser.UserType == "Adopter")
+        {
+            NavigationManager.NavigateTo("/adopter-dashboard");
+        }
+        else if (CurrentUser.UserType == "Shelter")
+        {
+            NavigationManager.NavigateTo("/shelter-dashboard");
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+}
