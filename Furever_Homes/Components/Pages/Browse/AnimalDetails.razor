@@ -2,16 +2,58 @@
 @rendermode InteractiveServer
 
 @using Furever_Homes.Models
-@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using Radzen
 @using Radzen.Blazor
+@using Furever_Homes.Services
 
 @inject ForeverDatabaseContext DbContext
+@inject NavigationManager NavigationManager
+@inject CurrentUserService CurrentUser
 
-<h3>@animal?.Name</h3>
+@if (animal == null)
+{
+    <p>Loading animal details...</p>
+}
+else
+{
+    <RadzenCard Style="padding:20px; max-width:700px;">
+        <h2>@animal.Name</h2>
 
+        @{
+            var primaryPhoto = animal.AnimalPhotos
+                        .FirstOrDefault(p => p.IsPrimary)?.PhotoUrl;
+        }
 
+        @if (!string.IsNullOrWhiteSpace(primaryPhoto))
+        {
+            <img src="@primaryPhoto"
+                 style="width:100%; max-height:350px; object-fit:cover; border-radius:10px;" />
+        }
+
+        <p><b>Breed:</b> @animal.Breed?.BreedName</p>
+        <p><b>Sex:</b> @animal.Sex</p>
+        <p><b>Age:</b> @FormatAge(animal.Age)</p>
+        <p><b>Color:</b> @animal.Color</p>
+        <p><b>Vaccinated:</b> @(animal.Vaccinated ? "Yes" : "No")</p>
+        <p><b>Description:</b> @animal.Description</p>
+
+        @if (CurrentUser.IsAuthenticated && CurrentUser.UserType == "Adopter")
+        {
+            <RadzenButton Text="Apply to Adopt"
+                          ButtonStyle="ButtonStyle.Primary"
+                          Size="ButtonSize.Small"
+                          Click="@(() => NavigationManager.NavigateTo($"/application-form/{animal.AnimalId}"))" />
+        }
+
+        <RadzenButton Text="Back"
+                      ButtonStyle="ButtonStyle.Light"
+                      Size="ButtonSize.Small"
+                      Style="margin-left:10px;"
+                      Click="@(() => NavigationManager.NavigateTo("/browse-animals"))" />
+
+    </RadzenCard>
+}
 
 @code {
     [Parameter] public int animalId { get; set; }
@@ -21,6 +63,22 @@
     protected override async Task OnInitializedAsync()
     {
         animal = await DbContext.Animals
+            .Include(a => a.Breed)
+            .Include(a => a.AnimalPhotos)
+            .Include(a => a.Shelter)
             .FirstOrDefaultAsync(a => a.AnimalId == animalId);
+    }
+
+    private string FormatAge(int? months)
+    {
+        if (months == null) return "Unknown";
+        if (months < 12) return $"{months} months";
+
+        int years = months.Value / 12;
+        int remainingMonths = months.Value % 12;
+
+        return remainingMonths == 0
+            ? $"{years} years"
+            : $"{years} years {remainingMonths} months";
     }
 }

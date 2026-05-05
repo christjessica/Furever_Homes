@@ -14,6 +14,7 @@
 
 <RadzenButton Text="Edit Account" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="EditAccount" />
 <RadzenButton Text="View Saved Animals" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="ViewSavedAnimals" />
+<RadzenButton Text="My Applications" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="ViewApplications" />
 
 
 @code {
@@ -55,5 +56,10 @@
     private void ViewSavedAnimals()
     {
         NavigationManager.NavigateTo("/adopter-dashboard/saved-animals");
+    }
+
+    private void ViewApplications()
+    {
+        NavigationManager.NavigateTo("/adopter-dashboard/applications");
     }
 }

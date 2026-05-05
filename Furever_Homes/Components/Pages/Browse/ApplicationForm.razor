@@ -1,0 +1,125 @@
+﻿@page "/application-form/{AnimalId:int}"
+@rendermode InteractiveServer
+
+@using Furever_Homes.Models
+@using Furever_Homes.Services
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@using Radzen.Blazor
+
+@inject UserManager<ApplicationUser> UserManager
+@inject CurrentUserService CurrentUser
+@inject Furever_Homes.Models.ForeverDatabaseContext DbContext
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+
+@if (animal == null)
+{
+    <p>Loading application...</p>
+}
+else
+{
+    <RadzenCard Style="padding20px; max-width:700px;">
+        <h2>Adoption Application</h2>
+
+        <p>
+            You are applying to adopt <b>@animal.Name</b>.
+        </p>
+
+        <RadzenTemplateForm TItem="AdoptionApplication" Data="@application" Submit="@SubmitApplication">
+            <RadzenStack Gap="1rem">
+
+                <RadzenFormField Text="Application Notes">
+                    <p>Enter amount of household members and animals, living situation, pet experience, etc.</p>
+                    <RadzenTextArea @bind-Value="application.Notes"
+                                    Placeholder="Tell the shelter why you are interested in this animal."
+                                    Style="width:100%; min-height:120px;" />
+                </RadzenFormField>
+
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                    <RadzenButton Text="Submit Application"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  ButtonType="ButtonType.Submit" />
+
+                    <RadzenButton Text="Cancel"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Click="@(() => NavigationManager.NavigateTo($"/animal-details/{AnimalId}"))" />
+                </RadzenStack>
+
+            </RadzenStack>
+        </RadzenTemplateForm>
+    </RadzenCard>
+}
+
+@code {
+    [Parameter] public int AnimalId { get; set; }
+
+    private Animal? animal;
+    private AdoptionApplication application = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!CurrentUser.IsAuthenticated || CurrentUser.UserType != "Adopter")
+        {
+            NavigationManager.NavigateTo("/sign-in");
+            return;
+        }
+
+        animal = await DbContext.Animals
+            .FirstOrDefaultAsync(a => a.AnimalId == AnimalId);
+
+        if (animal == null)
+        {
+            NavigationManager.NavigateTo("/browse-animals");
+            return;
+        }
+    }
+
+    private async Task SubmitApplication()
+    {
+        var adopter = await DbContext.Adopters
+            .FirstOrDefaultAsync(a => a.ApplicationUserId == CurrentUser.UserId);
+
+        if (adopter == null)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Adopter not found",
+                Detail = "Could not find an adopter profile for this account."
+            });
+            return;
+        }
+
+        application.AdopterId = adopter.AdopterId;
+        application.AnimalId = AnimalId;
+        application.Status = "Pending";
+        application.ApplicationDate = DateTime.Now;
+
+        DbContext.AdoptionApplications.Add(application);
+
+        try
+        {
+            await DbContext.SaveChangesAsync();
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Application submitted",
+                Detail = "Your adoption application has been submitted."
+            });
+
+            NavigationManager.NavigateTo("/adopter-dashboard/applications");
+        }
+        catch
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Info,
+                Summary = "Already applied",
+                Detail = "You already submitted an application for this animal."
+            });
+        }
+    }
+}

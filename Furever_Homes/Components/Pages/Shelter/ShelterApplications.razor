@@ -1,0 +1,127 @@
+﻿@page "/shelter-dashboard/applications"
+@rendermode InteractiveServer
+
+@using Furever_Homes.Models
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@using Radzen.Blazor
+@using Furever_Homes.Services
+
+@inject ForeverDatabaseContext DbContext
+@inject NavigationManager NavigationManager
+@inject CurrentUserService CurrentUser
+@inject NotificationService NotificationService
+
+<h2>Adoption Applications</h2>
+
+@if (applications.Count == 0)
+{
+    <p>No applications have been submitted for your animals yet.</p>
+}
+else
+{
+    <RadzenStack Gap="1rem">
+        @foreach (var app in applications)
+        {
+            <RadzenCard Style="padding:15px;">
+                <h3>@app.Animal?.Name</h3>
+
+                <p><b>Applicant:</b> @app.Adopter?.FirstName @app.Adopter?.LastName</p>
+                <p><b>Email:</b> @app.Adopter?.Email</p>
+                <p><b>Phone:</b> @app.Adopter?.PhoneNumber</p>
+                <p><b>Status:</b> @app.Status</p>
+                <p><b>Submitted:</b> @app.ApplicationDate.ToShortDateString()</p>
+
+                @if (!string.IsNullOrWhiteSpace(app.Notes))
+                {
+                    <p><b>Notes:</b> @app.Notes</p>
+                }
+
+                @if (app.Status == "Pending")
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                        <RadzenButton Text="Approve"
+                                      ButtonStyle="ButtonStyle.Success"
+                                      Size="ButtonSize.Small"
+                                      Click="@(() => ApproveApplication(app))" />
+
+                        <RadzenButton Text="Reject"
+                                      ButtonStyle="ButtonStyle.Danger"
+                                      Size="ButtonSize.Small"
+                                      Click="@(() => RejectApplication(app))" />
+                    </RadzenStack>
+                }
+            </RadzenCard>
+        }
+    </RadzenStack>
+}
+
+@code {
+    private List<AdoptionApplication> applications = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!CurrentUser.IsAuthenticated || CurrentUser.UserType != "Shelter")
+        {
+            NavigationManager.NavigateTo("/sign-in");
+            return;
+        }
+
+        var shelter = await DbContext.Shelters
+            .FirstOrDefaultAsync(s => s.ApplicationUserId == CurrentUser.UserId);
+
+        if (shelter == null)
+        {
+            NavigationManager.NavigateTo("/shelter-dashboard");
+            return;
+        }
+
+        applications = await DbContext.AdoptionApplications
+            .Include(a => a.Adopter)
+            .Include(a => a.Animal)
+            .Where(a => a.Animal.ShelterId == shelter.ShelterId)
+            .OrderByDescending(a => a.ApplicationDate)
+            .ToListAsync();
+    }
+
+    private async Task ApproveApplication(AdoptionApplication app)
+    {
+        app.Status = "Approved";
+
+        if (app.Animal != null)
+        {
+            app.Animal.Available = false;
+        }
+
+        var adoption = new Adoption
+        {
+            ApplicationId = app.ApplicationId,
+            AdoptionDate = DateTime.Now,
+            AdoptionFee = 0
+        };
+
+        DbContext.Adoptions.Add(adoption);
+        await DbContext.SaveChangesAsync();
+
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Application approved",
+            Detail = "The adoption has been recorded."
+        });
+    }
+
+    private async Task RejectApplication(AdoptionApplication app)
+    {
+        app.Status = "Rejected";
+
+        await DbContext.SaveChangesAsync();
+
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Info,
+            Summary = "Application rejected",
+            Detail = "The application status was updated."
+        });
+    }
+}

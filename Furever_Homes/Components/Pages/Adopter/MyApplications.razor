@@ -1,0 +1,75 @@
+﻿@page "/adopter-dashboard/applications"
+@rendermode InteractiveServer
+
+@using Furever_Homes.Models
+@using Furever_Homes.Services
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@using Radzen.Blazor
+
+@inject UserManager<ApplicationUser> UserManager
+@inject CurrentUserService CurrentUser
+@inject Furever_Homes.Models.ForeverDatabaseContext DbContext
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+
+<h2>My Applications</h2>
+
+@if (applications.Count == 0)
+{
+    <p>You have not submitted any adoption applications yet.</p>
+}
+else
+{
+    <RadzenStack Gap="1rem">
+        @foreach (var app in applications)
+        {
+            <RadzenCard Style="padding:15px;">
+                <h3>@app.Animal?.Name</h3>
+
+                <p><b>Status:</b> @app.Status</p>
+                <p><b>Submitted:</b> @app.ApplicationDate.ToShortDateString()</p>
+                <p><b>Breed:</b> @app.Animal?.Breed?.BreedName</p>
+
+                @if (!string.IsNullOrWhiteSpace(app.Notes))
+                {
+                    <p><b>Your Notes:</b> @app.Notes</p>
+                }
+
+                <RadzenButton Text="View Animal"
+                              Size="ButtonSize.Small"
+                              Click="@(() => NavigationManager.NavigateTo($"/animal-details/{app.AnimalId}"))" />
+            </RadzenCard>
+        }
+    </RadzenStack>
+}
+
+@code {
+    private List<AdoptionApplication> applications = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!CurrentUser.IsAuthenticated || CurrentUser.UserType != "Adopter")
+        {
+            NavigationManager.NavigateTo("/sign-in");
+            return;
+        }
+
+        var adopter = await DbContext.Adopters
+            .FirstOrDefaultAsync(a => a.ApplicationUserId == CurrentUser.UserId);
+
+        if (adopter == null)
+        {
+            NavigationManager.NavigateTo("/adopter-dashboard");
+            return;
+        }
+
+        applications = await DbContext.AdoptionApplications
+            .Include(a => a.Animal)
+                .ThenInclude(a => a.Breed)
+            .Where(a => a.AdopterId == adopter.AdopterId)
+            .OrderByDescending(a => a.ApplicationDate)
+            .ToListAsync();
+    }
+}

@@ -79,10 +79,10 @@
                             @if (CurrentUser.IsAuthenticated && CurrentUser.UserType == "Adopter")
                             {
                                 <RadzenButton Icon="@(IsSaved(a.AnimalId) ? "favorite" : "favorite_border")"
-                                              Style="@GetHeartStyle(a.AnimalId)"
-                                              ButtonStyle="ButtonStyle.Light"
-                                              Size="ButtonSize.Small"
-                                              Click="@(() => ToggleSave(a.AnimalId))" />
+                                                Style="@GetHeartStyle(a.AnimalId)"
+                                                ButtonStyle="ButtonStyle.Light"
+                                                Size="ButtonSize.Small"
+                                                Click="@(() => ToggleSave(a.AnimalId))" />
                             }
                         </RadzenStack>
                     </div>
