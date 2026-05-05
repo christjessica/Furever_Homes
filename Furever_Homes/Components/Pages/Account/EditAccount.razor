@@ -8,13 +8,110 @@
 @using Radzen
 @using Radzen.Blazor
 
-@inject UserManager<ApplicationUser> UserManager
 @inject CurrentUserService CurrentUser
 @inject Furever_Homes.Models.ForeverDatabaseContext DbContext
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
 
-<h3>Edit Account</h3>
+<h3>
+    @(adopter != null ? "Edit Adopter Account" : "Edit Shelter Account")
+</h3>
+
+@if (adopter == null && shelter == null)
+{
+    <p>Loading account...</p>
+}
+else
+{
+    <RadzenCard Style="padding:20px; max-width:700px;">
+        <RadzenStack Gap="1rem">
+
+            @if (adopter != null)
+            {
+                <RadzenFormField Text="First Name">
+                    <RadzenTextBox @bind-Value="adopter.FirstName" Style="width:100%" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Last Name">
+                    <RadzenTextBox @bind-Value="adopter.LastName" Style="width:100%" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Email">
+                    <RadzenTextBox @bind-Value="adopter.Email" Style="width:100%" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Phone Number">
+                    <RadzenTextBox @bind-Value="adopter.PhoneNumber" Style="width:100%" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Address Line 1">
+                    <RadzenTextBox @bind-Value="adopter.AddressLine1" Style="width:100%" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Address Line 2">
+                    <RadzenTextBox @bind-Value="adopter.AddressLine2" Style="width:100%" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="City">
+                    <RadzenTextBox @bind-Value="adopter.City" Style="width:100%" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="State">
+                    <RadzenTextBox @bind-Value="adopter.State" Style="width:100%" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Zip Code">
+                    <RadzenTextBox @bind-Value="adopter.ZipCode" Style="width:100%" />
+                </RadzenFormField>
+            }
+            else if (shelter != null)
+            {
+                <RadzenFormField Text="Shelter Name">
+                    <RadzenTextBox @bind-Value="shelter.ShelterName" Style="width:100%" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Contact Email">
+                    <RadzenTextBox @bind-Value="shelter.ContactEmail" Style="width:100%" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Phone Number">
+                    <RadzenTextBox @bind-Value="shelter.PhoneNumber" Style="width:100%" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Address Line 1">
+                    <RadzenTextBox @bind-Value="shelter.AddressLine1" Style="width:100%" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Address Line 2">
+                    <RadzenTextBox @bind-Value="shelter.AddressLine2" Style="width:100%" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="City">
+                    <RadzenTextBox @bind-Value="shelter.City" Style="width:100%" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="State">
+                    <RadzenTextBox @bind-Value="shelter.State" Style="width:100%" />
+                </RadzenFormField>
+
+                <RadzenFormField Text="Zip Code">
+                    <RadzenTextBox @bind-Value="shelter.ZipCode" Style="width:100%" />
+                </RadzenFormField>
+            }
+
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                <RadzenButton Text="Save Changes"
+                              ButtonStyle="ButtonStyle.Primary"
+                              Click="SaveAccount" />
+
+                <RadzenButton Text="Cancel"
+                              ButtonStyle="ButtonStyle.Light"
+                              Click="Cancel" />
+            </RadzenStack>
+
+        </RadzenStack>
+    </RadzenCard>
+}
 
 @code {
     private Adopter? adopter;
@@ -22,6 +119,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (!CurrentUser.IsAuthenticated)
+        {
+            NavigationManager.NavigateTo("/sign-in");
+            return;
+        }
+
         if (CurrentUser.UserType == "Adopter")
         {
             adopter = await DbContext.Adopters
@@ -49,5 +152,15 @@
             NavigationManager.NavigateTo("/adopter-dashboard");
         else if (CurrentUser.UserType == "Shelter")
             NavigationManager.NavigateTo("/shelter-dashboard");
+    }
+
+    private void Cancel()
+    {
+        if (CurrentUser.UserType == "Adopter")
+            NavigationManager.NavigateTo("/adopter-dashboard");
+        else if (CurrentUser.UserType == "Shelter")
+            NavigationManager.NavigateTo("/shelter-dashboard");
+        else
+            NavigationManager.NavigateTo("/");
     }
 }
