@@ -11,12 +11,11 @@
 @inject Furever_Homes.Models.ForeverDatabaseContext DbContext
 @inject NavigationManager NavigationManager
 @inject CurrentUserService CurrentUser
+<h2>Welcome employee! What would you like to do?</h2>
 
-<RadzenButton Text="Edit Account" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="EditAccount" />
-<RadzenButton Text="Add Animal" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="AddAnimal"/>
-<RadzenButton Text="View Animals" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="ViewAnimals" />
-<RadzenButton Text="View Applications" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="ViewApplications" />
-
+<RadzenButton Text="Add Animal ➕" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="AddAnimal" />
+<RadzenButton Text="View Animals 🔍" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="ViewAnimals" />
+<RadzenButton Text="View Animals 🔍" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="EditAccount" />
 
 @code {
 

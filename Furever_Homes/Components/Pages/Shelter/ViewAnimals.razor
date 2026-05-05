@@ -70,9 +70,9 @@
                     </p>
 
                     @* Navigate to full details page for this animal *@
-                    <RadzenButton Text="Edit"
+                    <RadzenButton Text="Edit ✏️"
                                   Style="margin-top:10px"
-                                  Click="@(() => GoToDetails(a.AnimalId))" />
+                                  Click="@(() => GoToEdit(a.AnimalId))" />
                 </div>
             </RadzenCard>
         </RadzenColumn>
@@ -131,7 +131,7 @@
     }
 
     // Navigates to the details page for the selected animal
-    void GoToDetails(int animalId)
+    void GoToEdit(int animalId)
     {
         NavigationManager.NavigateTo($"/shelter-dashboard/edit-animal/{animalId}");
     }

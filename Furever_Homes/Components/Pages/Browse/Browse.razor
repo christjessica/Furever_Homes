@@ -13,7 +13,7 @@
 @inject CurrentUserService CurrentUser
 @inject NotificationService NotificationService
 
-<h2>Available Animals</h2>
+<h2>Available Animals🐾</h2>
 
 @* Displays all available animals in a card-based layout.
    Each card shows the primary photo, basic info, and a link to details. *@
@@ -27,7 +27,7 @@
     {
         <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
             @* Individual animal card *@
-            <RadzenCard Style="padding:0; overflow:hidden; max-width:400px">
+            <RadzenCard Style="padding:0; overflow:hidden; max-width:100%">
 
                 @* Get the primary photo for this animal *@
                 @* Because of the database constraint, there should only ever be one primary photo *@
