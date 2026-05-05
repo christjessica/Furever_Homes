@@ -15,18 +15,43 @@
 
 <RadzenCard class="rz-my-12 rz-mx-auto rz-p-4 rz-p-md-12" style="max-width: 600px;">
     <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="1rem" class="rz-p-sm-12">
+        <!-- First Question -->
+        <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Gap="2rem">
+                <img src="/images/dog.png" alt="Dog" style="width:120px;" />
+                <img src="/images/cat.png" alt="Cat" style="width:120px;" />
+            </RadzenStack>
+        
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Wrap="FlexWrap.Wrap" class="rz-p-8">
             <RadzenLabel Text ="What kind of animal do you want to adopt?" />
             <RadzenButton Text="Dog" MouseEnter="@(args => TheDogGoes(args, new TooltipOptions() { Position = TooltipPosition.Bottom }))" Click="@(() => SetPetPreference("Dog"))"/>
             <RadzenButton Text="Cat" MouseEnter="@(args => TheCatGoes(args, new TooltipOptions() { Position = TooltipPosition.Bottom }))" Click="@(() => SetPetPreference("Cat"))"/>
             <RadzenButton Text="Either" MouseEnter="@(args => ShowNothing(args, new TooltipOptions() { Position = TooltipPosition.Bottom }))" Click="@(() => SetPetPreference("Either"))"/>   
         </RadzenStack>
+    </RadzenStack>
+
+        <!-- Second Question -->
+        <RadzenStack Gap="1rem" AlignItems="AlignItems.Center">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="2 rem" >
+                <img src="/images/maleSymbol.png" alt="Dog" style="width:50px;height: auto; object-fit: contain;"/>
+                <img src="/images/femaleSymbol.png" alt="Cat" style="width:50px; height: auto; object-fit: contain;" />
+        </RadzenStack>
+    </RadzenStack>
+
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Wrap="FlexWrap.Wrap" class="rz-p-8">
             <RadzenLabel Text="Do you prefer a male or female pet?" />
             <RadzenButton Text="Male"  Click="@(() => SetSexPreference("Male"))"/>
             <RadzenButton Text="Female" Click="@(() => SetSexPreference("Female"))"/>
             <RadzenButton Text="No Preference" Click="@(() => SetSexPreference("No Preference"))"/>
         </RadzenStack>
+
+        <!-- Third Question -->
+
+        <RadzenStack Orientation="Orientation.Horizontal"  Gap="1rem" >
+            <img src="/images/puppy.png" alt="Dog" style="width:120px; height: auto; object-fit:contain;"/>
+            <img src="/images/olderDog.png" alt="Cat" style="width:180px; height: auto; object-fit:contain;" />
+        </RadzenStack>
+
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Wrap="FlexWrap.Wrap" class="rz-p-8">
             <RadzenButton Text="puppy/kitten"  Click="@(() => SetAgePreference("puppy/kitten"))"/>
             <RadzenButton Text="young" Click="@(() => SetAgePreference("young"))"/>
