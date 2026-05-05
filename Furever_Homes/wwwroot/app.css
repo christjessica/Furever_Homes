@@ -1,5 +1,5 @@
-body{
-    background: linear-gradient(135deg, #cdb4db, #bde0fe);
+body {
+    background: linear-gradient(180deg, #fff1f5, #e6f7ff);
 }
 .sidebar,.navbar,.top-row, /*Makes the side bar the pink color*/
 .nav-scrollable {
@@ -24,8 +24,8 @@ body{
     color: #e91e63 !important;
 }
 
-html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+ html, body {
+    font-family: 'Poppins', sans-serif !important;
 }
 
 a, .btn-link {
@@ -88,7 +88,7 @@ h1:focus {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background-image: url('images/WelcomeBackground.png')!important;
+    background-image: url('images/WelcomeBackground3.png')!important;
     background-size: cover;
     background-position:center;
     text-align: center;
@@ -96,14 +96,18 @@ h1:focus {
 }
 .animal-grid {
     display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)) !important;
     gap: 1.5rem !important;
-    padding: 1rem !important;
+    
 }
-.animal-card{
-    height: 100%;
-    border: 15px solid #8093f1  !important; 
+.animal-card {
+    width: 100%;
+    
+    display: flex;
+    flex-direction: column;
+    border: 15px solid #cdb4db !important;
     border-radius: 12px;
+   
     box-shadow: 0 4px 12px rgba(233, 30, 99, 0.15);
 }
 .register-card{

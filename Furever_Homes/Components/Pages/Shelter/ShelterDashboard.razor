@@ -11,9 +11,9 @@
 @inject Furever_Homes.Models.ForeverDatabaseContext DbContext
 @inject NavigationManager NavigationManager
 @inject CurrentUserService CurrentUser
-
-<RadzenButton Text="Add Animal" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="AddAnimal"/>
-<RadzenButton Text="View Animals" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="ViewAnimals" />
+<h2>Welcome employee! What would you like to do?</h2>
+<RadzenButton Text="Add Animal ➕" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="AddAnimal" />
+<RadzenButton Text="View Animals 🔍" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" Click="ViewAnimals" />
 
 
 @code {
@@ -21,6 +21,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+      
         //Not logged in
         if (!CurrentUser.IsAuthenticated)
         {
@@ -45,7 +46,10 @@
         animals = await DbContext.Animals
             .Where(a => a.ShelterId == shelter.ShelterId)
             .ToListAsync();
+       
+       
     }
+       
 
     private void AddAnimal()
     {

@@ -1,6 +1,6 @@
 ﻿@page "/shelter-dashboard/view-animals"
 
-<h3>ViewAndEditAnimals</h3>
+<h3>View and Edit Animals</h3>
 
 @rendermode InteractiveServer
 
@@ -27,7 +27,7 @@
         <p><b>Vaccinated:</b> @(a.Vaccinated ? "Yes" : "No")</p>
         <p><b>Description:</b> @a.Description</p>
 
-        <RadzenButton Text="Edit"
+        <RadzenButton Text="Edit ✏️"
                       Click="@(() => EditAnimal(a.AnimalId))" />
 
     </RadzenCard>
@@ -38,12 +38,45 @@
 
     protected override async Task OnInitializedAsync()
     {
-        animals = await DbContext.Animals
-            .Include(a => a.Breed)
-            .Where(a => a.Available)
-            .ToListAsync();
+        // animals = await DbContext.Animals
+        //     .Include(a => a.Breed)
+        //     .Where(a => a.Available)
+        //     .ToListAsync();
+        animals = GetTempAnimals(); //front end
     }
+    //mock data starts here. Backend can delete later
+    private List<Animal> GetTempAnimals()
+    {
 
+        return new List<Animal>
+        {
+            new Animal
+            {
+                AnimalId = 1,
+                Name = "Buddy",
+                Age = 10,
+                Color = "Brown",
+                Sex = "Male",
+                Vaccinated = true,
+                Description = "Friendly and energetic! Loves belly rubs",
+                Breed = new Breed{BreedName = "Poodle" },
+                Available = true
+            },
+            new Animal
+            {
+                AnimalId = 2,
+                Name = "Pickles",
+                Age = 3,
+                Color = "Black",
+                Sex = "Female",
+                Vaccinated = true,
+                Description = "Very calm and loves the outdoors",
+                Breed = new Breed {BreedName = "Domestic ShortHair" },
+                Available = true
+            },
+
+        };
+    }  //end of frontend work
     private string FormatAge(int? months)
     {
         if (months == null) return "Unknown";

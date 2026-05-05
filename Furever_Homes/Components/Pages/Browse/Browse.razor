@@ -12,83 +12,68 @@
 
 <h2>Available Animals🐾</h2>
 
- <div class="animal-grid">  <!--wrap animal information in a grid of cards-->
 
+@*
+<div class="animal-grid">
+    <!--wrap animal information in a grid of cards-->
     @foreach (var a in animals)
     {
-        <RadzenCard class="animal-card" Style="padding:15px">
+        <RadzenCard class="animal-card  rz-my-12 rz-mx-auto">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="1rem" class="rz-p-4">
 
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                <h3>@a.Name</h3>
-                <span><b>@FormatAge(a.Age)</b></span>
+                <RadzenImage Path="@a?.AnimalPhoto?.PhotoUrl" Style="width: 100px; height: 100px; border-radius: 50%;" />
+                <RadzenStack Gap="0">
+                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-2 rz-my-0">Name 🐾</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1"><b>@(a?.Name)</b></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Overline" class="rz-display-flex rz-mt-4 rz-mb-0">Shelter 🏠</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1"><b>@(a?.Shelter?.ShelterName)</b></RadzenText>
+                </RadzenStack>
             </RadzenStack>
+            <RadzenCard class="rz-background-color-primary-light rz-shadow-0 rz-border-radius-0 rz-p-8" style="margin: 1rem calc(-1 * var(--rz-card-padding));">
+                <RadzenText TextStyle="TextStyle.H6 " class="rz-color-on-primary-light"><strong>Animal Details</strong></RadzenText>
+                <RadzenRow RowGap="0">
+                    <RadzenColumn SizeSM="4">
+                        <RadzenText TextStyle="TextStyle.Overline" class="rz-color-on-primary-light rz-display-flex rz-mt-4 rz-mb-0">Age</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" class="rz-color-on-primary-light"><b>@(a?.Age)</b></RadzenText>
+                        <RadzenText TextStyle="TextStyle.Overline" class="rz-color-on-primary-light rz-display-flex rz-mt-4 rz-mb-0">Breed </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" class="rz-color-on-primary-light"><b>@(a.Breed?.BreedName)</b></RadzenText>
+                        <RadzenText TextStyle="TextStyle.Overline" class="rz-color-on-primary-light rz-display-flex rz-mt-4 rz-mb-0">Vaccinated </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" class="rz-color-on-primary-light"><b>@(a.Vaccinated ? "Yes" : "No")</b></RadzenText>
 
-            <p><b>Breed:</b> @a.Breed?.BreedName</p> <!-- fix later -->
-            <p><b>Color:</b> @a.Color</p>
-            <p><b>Description:</b> @a.Description</p>
+                    </RadzenColumn>
+                    <RadzenColumn SizeSM="8">
+                        <RadzenText TextStyle="TextStyle.Overline" class="rz-color-on-primary-light rz-display-flex rz-mt-4 rz-mb-0">Sex </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" class="rz-color-on-primary-light"><b>@(a?.Sex)</b></RadzenText>
+                        <RadzenText TextStyle="TextStyle.Overline" class="rz-color-on-primary-light rz-display-flex rz-mt-4 rz-mb-0">Color </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" class="rz-color-on-primary-light"><b>@(a?.Color)</b></RadzenText>
+                        <RadzenText TextStyle="TextStyle.Overline" class="rz-color-on-primary-light rz-display-flex rz-mt-4 rz-mb-0">Description</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" class="rz-color-on-primary-light"><b>@(a?.Description)</b></RadzenText>
 
-            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem">
-                <span>@a.Sex</span>
-                <span>@(a.Vaccinated ? "Vaccinated" : "Not Vaccinated")</span>
+
+                    </RadzenColumn>
+                </RadzenRow>
+            </RadzenCard>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0">
+                <RadzenButton Text="View Details"
+                              Click="@(() => GoToDetails(a.AnimalId))" />
             </RadzenStack>
-            <RadzenButton Text="View Details"
-                          Click="@(() => GoToDetails(a.AnimalId))" />
 
         </RadzenCard>
     }
-</div>
+</div>*@
 
 @code {
     private List<Animal> animals = new();
 
     protected override async Task OnInitializedAsync()
     {
-    
-        // animals = await DbContext.Animals
-        //     .Include(a => a.Breed)
-        //     .Where(a => a.Available)
-        //     .ToListAsync();
-
-        //TEMP: using mock data while backend works on DB and is unavailable to frontend
-        animals = GetTempAnimals(); //get rid of later
+         animals = await DbContext.Animals
+             .Include(a => a.Breed)
+             .Where(a => a.Available)
+             .ToListAsync();
 
         await Task.CompletedTask;
     }
-
-    //Frontend work, can get rid of this when fully merged with backend
-    
-    private List<Animal> GetTempAnimals()
-    {
-      
-        return new List<Animal>
-        {
-            new Animal
-            {
-                AnimalId = 1,
-                Name = "Buddy",
-                Age = 10,
-                Color = "Brown",
-                Sex = "Male",
-                Vaccinated = true,
-                Description = "Friendly and energetic! Loves belly rubs",
-                Breed = new Breed{BreedName = "Poodle" },
-                Available = true
-            },
-            new Animal
-            {
-                AnimalId = 2,
-                Name = "Pickles",
-                Age = 3,
-                Color = "Black",
-                Sex = "Female",
-                Vaccinated = true,
-                Description = "Very calm and loves the outdoors",
-                Breed = new Breed {BreedName = "Domestic ShortHair" },
-                Available = true
-            },
-            
-        };
-    }  //end of frontend work 
     
     private string FormatAge(int? months)
     {
