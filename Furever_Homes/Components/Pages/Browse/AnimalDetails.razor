@@ -6,7 +6,6 @@
 @using Radzen
 @using Radzen.Blazor
 @using Furever_Homes.Services
-
 @inject ForeverDatabaseContext DbContext
 @inject NavigationManager NavigationManager
 @inject CurrentUserService CurrentUser
@@ -20,15 +19,33 @@ else
     <RadzenCard Style="padding:20px; max-width:700px;">
         <h2>@animal.Name</h2>
 
-        @{
-            var primaryPhoto = animal.AnimalPhotos
-                        .FirstOrDefault(p => p.IsPrimary)?.PhotoUrl;
-        }
-
-        @if (!string.IsNullOrWhiteSpace(primaryPhoto))
+        @if (photos.Any())
         {
-            <img src="@primaryPhoto"
-                 style="width:100%; max-height:350px; object-fit:cover; border-radius:10px;" />
+            <div style="position:relative; margin-bottom:20px;">
+                <img src="@photos[currentPhotoIndex].PhotoUrl"
+                     style="width:100%; max-height:350px; object-fit:cover; border-radius:10px;" />
+
+                @if (photos.Count > 1)
+                {
+                    <RadzenButton Text="‹"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Style="position:absolute; left:10px; top:45%;"
+                                  Click="@PreviousPhoto" />
+
+                    <RadzenButton Text="›"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Style="position:absolute; right:10px; top:45%;"
+                                  Click="@NextPhoto" />
+
+                    <p style="text-align:center; margin-top:5px;">
+                        @(currentPhotoIndex + 1) / @photos.Count
+                    </p>
+                }
+            </div>
+        }
+        else
+        {
+            <p style="color:gray;">No photos available.</p>
         }
 
         <p><b>Breed:</b> @animal.Breed?.BreedName</p>
@@ -60,6 +77,29 @@ else
 
     private Animal? animal;
 
+    private List<AnimalPhoto> photos = new();
+    private int currentPhotoIndex = 0;
+
+    private void NextPhoto()
+    {
+        if (!photos.Any()) return;
+
+        currentPhotoIndex++;
+
+        if (currentPhotoIndex >= photos.Count)
+            currentPhotoIndex = 0;
+    }
+
+    private void PreviousPhoto()
+    {
+        if (!photos.Any()) return;
+
+        currentPhotoIndex--;
+
+        if (currentPhotoIndex < 0)
+            currentPhotoIndex = photos.Count - 1;
+    }
+
     protected override async Task OnInitializedAsync()
     {
         animal = await DbContext.Animals
@@ -67,6 +107,14 @@ else
             .Include(a => a.AnimalPhotos)
             .Include(a => a.Shelter)
             .FirstOrDefaultAsync(a => a.AnimalId == animalId);
+
+        if (animal != null)
+        {
+            photos = animal.AnimalPhotos
+                .OrderByDescending(p => p.IsPrimary)
+                .ThenBy(p => p.PhotoId)
+                .ToList();
+        }
     }
 
     private string FormatAge(int? months)

@@ -20,18 +20,18 @@
 }
 else
 {
-    <RadzenCard Style="padding20px; max-width:700px;">
+    <RadzenCard Style="padding:20px; max-width:700px;">
         <h2>Adoption Application</h2>
 
         <p>
             You are applying to adopt <b>@animal.Name</b>.
+            Enter amount of household members and animals, living situation, pet experience, etc.
         </p>
 
         <RadzenTemplateForm TItem="AdoptionApplication" Data="@application" Submit="@SubmitApplication">
             <RadzenStack Gap="1rem">
 
                 <RadzenFormField Text="Application Notes">
-                    <p>Enter amount of household members and animals, living situation, pet experience, etc.</p>
                     <RadzenTextArea @bind-Value="application.Notes"
                                     Placeholder="Tell the shelter why you are interested in this animal."
                                     Style="width:100%; min-height:120px;" />
@@ -44,6 +44,7 @@ else
 
                     <RadzenButton Text="Cancel"
                                   ButtonStyle="ButtonStyle.Light"
+                                  ButtonType="ButtonType.Button"
                                   Click="@(() => NavigationManager.NavigateTo($"/animal-details/{AnimalId}"))" />
                 </RadzenStack>
 
